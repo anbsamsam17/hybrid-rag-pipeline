@@ -1,4 +1,5 @@
 """Smoke tests for the configuration layer — no API keys or services required."""
+
 from __future__ import annotations
 
 from rag.config import Settings, get_settings

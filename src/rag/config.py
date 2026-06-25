@@ -6,6 +6,7 @@ in the code). This mirrors the reproducibility discipline of the wider project: 
 config that produced an index/eval run can be serialized into ``meta.json`` alongside the
 git SHA and corpus hash.
 """
+
 from __future__ import annotations
 
 from functools import lru_cache

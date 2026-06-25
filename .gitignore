@@ -34,9 +34,10 @@ htmlcov/
 # Notebooks
 .ipynb_checkpoints/
 
-# Data, indexes, model caches (large / non-reproducible artifacts)
-data/raw/
-data/processed/
+# Data, indexes, model caches (large / non-reproducible / proprietary artifacts)
+# data/corpus/ = PRIVATE local docs (e.g. proprietary business docs) — never commit.
+# data/sample/ (public demo corpus) and data/eval/ (golden set) ARE committed.
+data/corpus/
 storage/
 qdrant_storage/
 *.duckdb

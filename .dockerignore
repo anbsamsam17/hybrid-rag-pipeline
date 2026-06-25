@@ -1,0 +1,15 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.env
+.env.*
+qdrant_storage/
+storage/
+data/corpus/
+notebooks/
+GUIDE-PEDAGOGIQUE.html

@@ -1,0 +1,84 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hybrid-rag-pipeline"
+version = "0.1.0"
+description = "Production-grade hybrid RAG: dense + sparse retrieval, RRF, verified citations, rigorous evaluation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Samir Anbri" }]
+keywords = ["rag", "retrieval", "hybrid-search", "bm25", "rrf", "reranking", "langchain", "langgraph", "evaluation"]
+
+# NOTE: lower bounds here; exact versions are locked at `make install` time
+# (a lockfile / pinned set keeps builds reproducible — see meta.json discipline).
+dependencies = [
+  # Orchestration
+  "langchain>=0.3",
+  "langchain-community>=0.3",
+  "langchain-anthropic>=0.2",
+  "langchain-openai>=0.2",
+  "langgraph>=0.2",
+  # Retrieval / indexing
+  "qdrant-client>=1.11",
+  "rank-bm25>=0.2.2",
+  "sentence-transformers>=3.0",   # local embeddings + cross-encoder reranker
+  # LLMs / structured output
+  "anthropic>=0.40",
+  "openai>=1.50",
+  "pydantic>=2.8",
+  "pydantic-settings>=2.4",
+  "instructor>=1.5",
+  # API
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sse-starlette>=2.1",
+  # Evaluation / stats
+  "ragas>=0.2",
+  "numpy>=1.26",
+  "scipy>=1.13",
+  # Document loading / chunking
+  "pymupdf>=1.24",      # PDF
+  "python-docx>=1.1",   # Word (.docx) — common for business docs
+  "tiktoken>=0.7",      # token-aware chunking
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.6",
+  "black>=24.8",
+  "mypy>=1.11",
+]
+
+[project.urls]
+Repository = "https://github.com/anbsamsam17/hybrid-rag-pipeline"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rag"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]  # pyflakes, pycodestyle, isort, pyupgrade, bugbear, simplify
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true   # many ML libs ship no stubs
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]   # import `rag` in tests without an editable install
+testpaths = ["tests"]
+addopts = "-q"

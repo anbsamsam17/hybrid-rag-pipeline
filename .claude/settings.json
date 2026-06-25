@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "claude-opus-4-8",
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "0"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest *)",
+      "Bash(pytest *)",
+      "Bash(python -m ruff *)",
+      "Bash(ruff *)",
+      "Bash(python -m black *)",
+      "Bash(black *)",
+      "Bash(python *)",
+      "Bash(python -m *)",
+      "Bash(pip install *)",
+      "Bash(pip show *)",
+      "Bash(pip list *)",
+      "Bash(docker compose up *)",
+      "Bash(docker compose build *)",
+      "Bash(docker compose ps *)",
+      "Bash(docker compose logs *)",
+      "Bash(make *)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git show *)",
+      "Read(./**)",
+      "Edit(./src/**)",
+      "Write(./src/**)",
+      "Write(./tests/**)",
+      "Write(./docs/**)"
+    ],
+    "ask": [
+      "Write(./.claude/**)",
+      "Write(./.github/**)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(curl *)",
+      "Bash(docker compose down *)",
+      "Write(**/golden.jsonl)",
+      "Write(**/meta.json)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}/.claude/hooks/format_python.py",
+            "statusMessage": "Formatting Python with ruff + black..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}/.claude/hooks/protect_golden_and_secrets.py",
+            "statusMessage": "Checking protected paths (golden set / secrets / provenance)..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}/.claude/hooks/eval_guard.py",
+            "statusMessage": "Checking whether retrieval/eval/verification changed..."
+          }
+        ]
+      }
+    ]
+  }
+}

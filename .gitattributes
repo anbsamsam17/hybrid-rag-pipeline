@@ -1,0 +1,61 @@
+# Normalize line endings across platforms.
+# Git stores text files with LF; checkout uses LF everywhere (see eol=lf).
+# This keeps diffs clean and the format/protect hooks deterministic on Windows + CI.
+* text=auto eol=lf
+
+# --- Explicit text files (force LF, never auto-detected as binary) ---
+*.py        text eol=lf
+*.pyi       text eol=lf
+*.ipynb     text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+*.rst       text eol=lf
+*.cfg       text eol=lf
+*.ini       text eol=lf
+*.toml      text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.json      text eol=lf
+*.jsonl     text eol=lf
+*.csv       text eol=lf
+*.tsv       text eol=lf
+*.sql       text eol=lf
+*.env.example text eol=lf
+.gitignore  text eol=lf
+.gitattributes text eol=lf
+.dockerignore text eol=lf
+Dockerfile  text eol=lf
+Makefile    text eol=lf
+LICENSE     text eol=lf
+
+# Shell scripts and hooks MUST be LF (they run under Git Bash / Linux CI).
+*.sh        text eol=lf
+*.bash      text eol=lf
+
+# --- Binary files (never normalize, never diff as text) ---
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+*.pdf       binary
+*.bin       binary
+*.safetensors binary
+*.gz        binary
+*.zip       binary
+*.tar       binary
+*.parquet   binary
+*.duckdb    binary
+*.sqlite    binary
+*.sqlite3   binary
+*.pkl       binary
+*.npy       binary
+*.npz       binary
+
+# --- GitHub linguist / diff treatment ---
+# Keep notebooks out of language stats and diff them as text where shown.
+*.ipynb     linguist-language=Python linguist-detectable=false
+# Mark generated/large artifacts so they don't dominate diffs or language stats.
+data/**           linguist-generated=true
+docs/decisions/** linguist-documentation=true

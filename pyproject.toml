@@ -52,6 +52,11 @@ dev = [
   "ruff>=0.6",
   "black>=24.8",
   "mypy>=1.11",
+  # Lightweight indexing backends so the dense-store + BM25 + build-smoke tests run
+  # unconditionally in CI (the suite must verify idempotency / reproducibility, not skip it).
+  # NOTE: sentence-transformers/torch are intentionally NOT here — tests use HashingEmbedder.
+  "qdrant-client>=1.11",
+  "rank-bm25>=0.2.2",
 ]
 
 [project.urls]
@@ -82,3 +87,9 @@ ignore_missing_imports = true   # many ML libs ship no stubs
 pythonpath = ["src"]   # import `rag` in tests without an editable install
 testpaths = ["tests"]
 addopts = "-q"
+# Scoped: any future qdrant_client deprecation fails the suite loudly (the indexing path
+# must not silently ride a deprecated API into a breaking minor bump). Kept narrow so
+# unrelated third-party deprecations don't break the build.
+filterwarnings = [
+  "error::DeprecationWarning:qdrant_client",
+]

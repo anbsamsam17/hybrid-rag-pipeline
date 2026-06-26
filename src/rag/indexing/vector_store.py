@@ -93,24 +93,37 @@ class QdrantVectorStore:
         collection: str,
         url: str | None = None,
         location: str | None = None,
+        path: str | None = None,
+        api_key: str | None = None,
     ) -> None:
-        """Connect to Qdrant via ``location`` (e.g. ``":memory:"``) or a server ``url``.
+        """Connect to Qdrant in exactly ONE mode:
+
+        * ``url`` — a running server (optionally with ``api_key`` for Qdrant Cloud / secured
+          instances);
+        * ``path`` — a local on-disk store, embedded in this process (**no server, no
+          Docker**) — ideal for private/offline daily use;
+        * ``location`` — e.g. ``":memory:"`` for an in-process, ephemeral store (tests).
 
         ``qdrant_client`` is imported lazily here, so this module imports cleanly without
         the package installed; only constructing a store requires it.
         """
-        if url is None and location is None:
-            raise ValueError("exactly one of `url` or `location` must be provided")
-        if url is not None and location is not None:
-            raise ValueError("provide only one of `url` or `location`, not both")
+        modes = {"url": url, "location": location, "path": path}
+        provided = [name for name, value in modes.items() if value is not None]
+        if len(provided) != 1:
+            raise ValueError(
+                "provide exactly one of `url`, `location`, or `path` "
+                f"(got: {provided or 'none'})"
+            )
 
         from qdrant_client import QdrantClient
 
         self.collection = collection
         if location is not None:
             self._client = QdrantClient(location=location)
+        elif path is not None:
+            self._client = QdrantClient(path=path)
         else:
-            self._client = QdrantClient(url=url)
+            self._client = QdrantClient(url=url, api_key=api_key)
 
     @classmethod
     def in_memory(cls, collection: str) -> QdrantVectorStore:
@@ -119,8 +132,18 @@ class QdrantVectorStore:
 
     @classmethod
     def from_settings(cls, settings: Settings) -> QdrantVectorStore:
-        """Construct a server-backed store from ``settings`` (url + collection)."""
-        return cls(collection=settings.qdrant_collection, url=settings.qdrant_url)
+        """Construct a store from ``settings``, choosing the mode by config.
+
+        A local on-disk ``qdrant_path`` (embedded, no server) takes precedence; otherwise a
+        server ``qdrant_url`` with the optional ``qdrant_api_key`` (Qdrant Cloud / secured).
+        """
+        if settings.qdrant_path:
+            return cls(collection=settings.qdrant_collection, path=settings.qdrant_path)
+        return cls(
+            collection=settings.qdrant_collection,
+            url=settings.qdrant_url,
+            api_key=settings.qdrant_api_key,
+        )
 
     def ensure_collection(self, dim: int) -> None:
         """Create a fresh collection with cosine distance sized for ``dim`` vectors.

@@ -35,8 +35,13 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-small-en-v1.5"  # local default -> 0 API cost for eval
     reranker_model: str = "BAAI/bge-reranker-base"
 
-    # --- Vector store ---
+    # --- Vector store (3 modes) ---
+    # 1) server: qdrant_url (+ qdrant_api_key for Qdrant Cloud / secured servers)
+    # 2) local on-disk, NO server: set qdrant_path (takes precedence over qdrant_url)
+    # 3) in-memory: used by tests via QdrantVectorStore.in_memory(...)
     qdrant_url: str = "http://localhost:6333"
+    qdrant_api_key: str | None = None
+    qdrant_path: str | None = None  # e.g. "./storage/qdrant" -> embedded, no Docker/server
     qdrant_collection: str = "hybrid_rag"
 
     # --- Paths ---

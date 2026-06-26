@@ -75,6 +75,14 @@ class VectorStore(Protocol):
         """
         ...
 
+    def get_payloads(self, chunk_ids: list[str]) -> dict[str, dict[str, object]]:
+        """Return ``{chunk_id: payload}`` for the given chunk ids (missing ids omitted).
+
+        Lets the hybrid retriever hydrate text/metadata for fused candidates — including
+        sparse-only ones never returned by :meth:`search` — without re-reading the corpus.
+        """
+        ...
+
 
 class QdrantVectorStore:
     """Concrete :class:`VectorStore` over Qdrant (server URL or in-memory)."""
@@ -185,3 +193,39 @@ class QdrantVectorStore:
                 continue
             results.append((str(chunk_id), float(hit.score)))
         return results
+
+    def get_payloads(self, chunk_ids: list[str]) -> dict[str, dict[str, object]]:
+        """Return ``{chunk_id: payload}`` for ``chunk_ids`` (deduped; missing ids omitted).
+
+        Translates each ``chunk_id`` to its deterministic point id via :func:`point_id_for`
+        and retrieves the payloads in one round-trip with the non-deprecated ``retrieve``
+        API (``with_payload=True``, no vectors). The returned dict is keyed by the payload's
+        own ``chunk_id`` (the source of truth), so a point whose id we asked for but whose
+        payload lacks a ``chunk_id`` is skipped rather than mis-keyed. Order is irrelevant —
+        callers index by ``chunk_id`` — so a dict is the right return type here.
+
+        Used by the hybrid retriever to hydrate text/metadata for **every** fused candidate,
+        including sparse-only ids the dense ``search`` never returned.
+        """
+        if not chunk_ids:
+            return {}
+
+        # Dedup while preserving determinism; map point id -> chunk_id for safe lookup.
+        unique_ids = list(dict.fromkeys(chunk_ids))
+        point_ids = [point_id_for(chunk_id) for chunk_id in unique_ids]
+
+        records = self._client.retrieve(
+            collection_name=self.collection,
+            ids=point_ids,
+            with_payload=True,
+            with_vectors=False,
+        )
+        payloads: dict[str, dict[str, object]] = {}
+        for record in records:
+            payload = record.payload or {}
+            chunk_id = payload.get("chunk_id")
+            if chunk_id is None:
+                logger.warning("payload for point %s has no chunk_id; skipping", record.id)
+                continue
+            payloads[str(chunk_id)] = dict(payload)
+        return payloads

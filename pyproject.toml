@@ -57,6 +57,9 @@ dev = [
   # NOTE: sentence-transformers/torch are intentionally NOT here — tests use HashingEmbedder.
   "qdrant-client>=1.11",
   "rank-bm25>=0.2.2",
+  # FastAPI TestClient drives the API tests over the in-memory app (no live server).
+  # fastapi/uvicorn/sse-starlette are already runtime deps; httpx is what TestClient needs.
+  "httpx>=0.27",
 ]
 
 [project.urls]

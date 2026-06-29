@@ -13,7 +13,8 @@ Corpus ─▶ ingestion/    loaders (PDF/DOCX/MD/HTML) → chunking (fixed | rec
        ─▶ verification/ attribution checker: each claim ↔ its source span (measured rate)
        ─▶ agentic/      corrective_rag.py — LangGraph StateGraph (optional self-correction)
        ─▶ api/          FastAPI: /ingest /query /eval, SSE streaming, observability
-       ─▶ eval/         recall@k · nDCG@k · MRR · RAGAS · attribution_rate · bootstrap CI95
+       ─▶ eval/         metrics.py (recall@k · nDCG@k · MRR) + bootstrap.py (paired CI95)
+                        [harness + golden set wiring + RAGAS + attribution_rate forthcoming]
 ```
 
 Configuration is centralized in `src/rag/config.py` (`Settings`). Each `src/rag/<module>`
@@ -27,6 +28,8 @@ Architecture Decision Records live in [`decisions/`](decisions/) (use `/adr-new`
 - ADR-0001 — hybrid retrieval (dense + sparse) over dense-only _(to be written)_
 - ADR-0002 — Reciprocal Rank Fusion over weighted score fusion _(to be written)_
 - ADR-0003 — chunking strategy choice, justified by retrieval metrics _(to be written)_
+- [ADR-0004](decisions/ADR-0004-eval-metrics-and-paired-bootstrap.md) — retrieval metric
+  definitions (recall@k / nDCG@k / MRR) and paired percentile bootstrap CI95
 
 ## Evaluation-first
 

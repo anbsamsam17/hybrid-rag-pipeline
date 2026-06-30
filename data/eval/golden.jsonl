@@ -1,0 +1,16 @@
+{"query_id": "q01", "query": "What is the default maximum speed for cars on a dry motorway?", "relevant_chunk_ids": ["7c69b737f3a88c15"], "reference_answer": "130 km/h."}
+{"query_id": "q02", "query": "What is the speed limit for cars on the motorway when it is raining?", "relevant_chunk_ids": ["7c69b737f3a88c15"], "reference_answer": "110 km/h."}
+{"query_id": "q03", "query": "What speed is a car towing a trailer limited to on the motorway?", "relevant_chunk_ids": ["3362ab5aa451b025"], "reference_answer": "90 km/h."}
+{"query_id": "q04", "query": "What motorway speed limit applies to a driver who has held a licence for less than three years?", "relevant_chunk_ids": ["3362ab5aa451b025"], "reference_answer": "110 km/h, even in dry weather."}
+{"query_id": "q05", "query": "What is the minimum speed in the left-most lane of a motorway in good conditions?", "relevant_chunk_ids": ["79267e659c56d846"], "reference_answer": "80 km/h."}
+{"query_id": "q06", "query": "What should you do immediately if your vehicle breaks down on the motorway?", "relevant_chunk_ids": ["06f660cf2e9b2514"], "reference_answer": "Pull onto the hard shoulder to the right and switch on the hazard warning lights."}
+{"query_id": "q07", "query": "Where should the occupants wait after leaving a broken-down vehicle?", "relevant_chunk_ids": ["52aacdd989a8373b"], "reference_answer": "Behind the safety barrier, wearing a high-visibility vest."}
+{"query_id": "q08", "query": "How far behind the vehicle should the warning triangle be placed?", "relevant_chunk_ids": ["52aacdd989a8373b"], "reference_answer": "At least 30 metres."}
+{"query_id": "q09", "query": "How are motorway emergency telephones spaced, and what number can you call from a mobile?", "relevant_chunk_ids": ["b388d148bb52c652"], "reference_answer": "Every 2 kilometres; the European emergency number 112."}
+{"query_id": "q10", "query": "What is the two-second rule for following distance?", "relevant_chunk_ids": ["624335e7cedc4b68"], "reference_answer": "Keep at least a two-second gap behind the vehicle in front."}
+{"query_id": "q11", "query": "How large should the following gap be in rain or fog?", "relevant_chunk_ids": ["5d7d24b1cf32441b"], "reference_answer": "At least four seconds, double the dry-weather gap."}
+{"query_id": "q12", "query": "What are the penalties for tailgating?", "relevant_chunk_ids": ["a7b904a17d7ba8fe"], "reference_answer": "A fine and licence points."}
+{"query_id": "q13", "query": "What does a triangular sign with a red border mean?", "relevant_chunk_ids": ["0d7aeef31111d434"], "reference_answer": "A warning of danger ahead."}
+{"query_id": "q14", "query": "What does a blue background on a direction sign indicate?", "relevant_chunk_ids": ["f0ba24cab5129fb3"], "reference_answer": "A motorway."}
+{"query_id": "q15", "query": "What does aquaplaning feel like and how should you react?", "relevant_chunk_ids": ["7209bf372bf11573"], "reference_answer": "Steering goes light; ease off the accelerator, do not brake hard, and hold the wheel straight."}
+{"query_id": "q16", "query": "When may you drive on the hard shoulder as a running lane?", "relevant_chunk_ids": ["21b6e6134b41e203"], "reference_answer": "Only when an overhead gantry shows a green arrow above it; a red cross means it is closed."}

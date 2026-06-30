@@ -13,8 +13,20 @@ Corpus ─▶ ingestion/    loaders (PDF/DOCX/MD/HTML) → chunking (fixed | rec
        ─▶ verification/ attribution checker: each claim ↔ its source span (measured rate)
        ─▶ agentic/      corrective_rag.py — LangGraph StateGraph (optional self-correction)
        ─▶ api/          FastAPI: /ingest /query /eval, SSE streaming, observability
-       ─▶ eval/         metrics.py (recall@k · nDCG@k · MRR) + bootstrap.py (paired CI95)
-                        [harness + golden set wiring + RAGAS + attribution_rate forthcoming]
+       ─▶ eval/         Retrieval evaluation harness (increment 2, complete):
+                          · metrics.py — recall@k, nDCG@k, reciprocal_rank, MRR (pure, backend-agnostic)
+                          · bootstrap.py — paired percentile CI95 (seed-stable, bit-exact reproducible)
+                          · models.py — EvalProvenance, EvalReport, RetrievalMetrics, ConfigComparison
+                          · golden.py — load the labeled golden set (never indexed)
+                          · harness.py — run_eval() orchestrates hermetic eval-scoped index build,
+                            scores 4 configs (dense-only / sparse-only / hybrid / hybrid+rerank) on
+                            the committed golden set, computes per-config metrics + paired bootstrap
+                            CI95 comparisons, enforces anti-leakage guards (golden path, coverage,
+                            public corpus), emits byte-diffable JSON artifact + console report.
+                          · k_values = (1, 3, 5, 10); headline metric = nDCG@10; secondary = recall@5.
+                          · Runs via `make eval` → `python -m rag.eval.harness`.
+                        [RAGAS faithfulness/answer-relevance + attribution_rate aggregation
+                         forthcoming — increment 3, requires LLM judge]
 ```
 
 Configuration is centralized in `src/rag/config.py` (`Settings`). Each `src/rag/<module>`
@@ -23,13 +35,28 @@ rather than duplicating them.
 
 ## Decisions
 
-Architecture Decision Records live in [`decisions/`](decisions/) (use `/adr-new`):
+Architecture Decision Records live in [`decisions/`](decisions/) and guide cross-cutting
+design. Use the `/adr-new` slash command to create one (assigned in sequence; `rag-architect`
+authors, `docs-historian` formats and cross-links).
+
+### Evaluation (increment 2, complete)
+
+- [ADR-0004](decisions/ADR-0004-eval-metrics-and-paired-bootstrap.md) — **Retrieval metric
+  definitions** (recall@k / nDCG@k / reciprocal_rank / MRR) as pure, backend-agnostic functions;
+  paired percentile bootstrap CI95 (seed-stable 12345, B=10000 default); edge-case handling
+  (dedup-first, honor k, finite validation). Consumed by the harness.
+- [ADR-0005](decisions/ADR-0005-retrieval-eval-harness.md) — **Retrieval evaluation harness**
+  (hermetic eval-scoped index build on public `sample_dir`, never touching production or private
+  corpus; single `K_RETRIEVE=10` retrieval per config per query; anti-leakage guards that raise
+  not warn: golden-path, eval-corpus-is-public, golden-coverage; paired bootstrap CI95 on
+  headline nDCG@10 + secondary recall@5; pre-registered PRIMARY endpoint for multiplicity
+  mitigation; byte-diffable JSON artifact + console report with `publishable` flag).
+
+### Retrieval & indexing (increments 1–2)
 
 - ADR-0001 — hybrid retrieval (dense + sparse) over dense-only _(to be written)_
-- ADR-0002 — Reciprocal Rank Fusion over weighted score fusion _(to be written)_
-- ADR-0003 — chunking strategy choice, justified by retrieval metrics _(to be written)_
-- [ADR-0004](decisions/ADR-0004-eval-metrics-and-paired-bootstrap.md) — retrieval metric
-  definitions (recall@k / nDCG@k / MRR) and paired percentile bootstrap CI95
+- ADR-0002 — Reciprocal Rank Fusion (k=60) over weighted score fusion _(to be written)_
+- ADR-0003 — chunking strategy choice (recursive 512/64), justified by retrieval metrics _(to be written)_
 
 ## Evaluation-first
 

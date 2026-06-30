@@ -15,11 +15,11 @@
 
 Most RAG demos stop at `embeddings → top-k → LLM` over a single PDF. That proves nothing about retrieval quality. This project is built around the questions that actually matter in production:
 
-- **Is the retrieval any good?** Measured with `recall@k`, `nDCG@k`, `MRR` on a labeled evaluation set — comparing dense-only vs. sparse-only vs. hybrid vs. hybrid+rerank.
-- **Are the answers grounded?** Every generated claim is checked against its cited source span; the pipeline reports a measured **citation attribution rate** rather than assuming faithfulness.
-- **Does it hold up as a system?** Async API, containerized vector store, observability (latency p95, cost/request), CI, and architecture decision records.
+- **Is the retrieval any good?** Measured rigorously with `recall@k`, `nDCG@k`, `MRR` on a labeled evaluation set, comparing **dense-only vs. sparse-only vs. hybrid vs. hybrid+rerank**. The comparison table includes paired bootstrap **CI95** to distinguish real wins from noise. The harness itself is hermetic (eval-scoped index, never touches production), anti-leakage (golden set validation, corpus freshness guards), reproducible (bit-exact, byte-diffable JSON artifact), and fully offline-testable.
+- **Are the answers grounded?** Every generated claim is checked against its cited source span; the pipeline reports a measured **citation attribution rate** (not assumed). _(Coming: RAGAS faithfulness/answer-relevance metrics.)_
+- **Does it hold up as a system?** Async API, containerized vector store, observability (latency p95, cost/request), CI, and architecture decision records capturing the key tradeoffs.
 
-The differentiator is not the stack — it is the **evaluation** and the **citation verification**.
+The differentiator is not the stack — it is the **evaluation rigor** and the **verified citations**.
 
 ## Architecture (target)
 
@@ -51,14 +51,15 @@ An optional **self-corrective RAG** layer (LangGraph) grades retrieved documents
 
 ## Roadmap
 
-- [ ] Ingestion + 3 chunking strategies (fixed / recursive / semantic)
-- [ ] Indexing (dense + sparse) with reproducible `meta.json`
-- [ ] Retrieval: dense, sparse, RRF fusion, cross-encoder rerank
-- [ ] Generation with enforced, structured citations
-- [ ] Citation verification + attribution rate
-- [ ] **Evaluation harness** + labeled golden set + comparison report
-- [ ] FastAPI service with streaming + observability
-- [ ] Docker Compose + CI + tests
+- [x] Ingestion + 3 chunking strategies (fixed / recursive / semantic)
+- [x] Indexing (dense + sparse) with reproducible `meta.json`
+- [x] Retrieval: dense, sparse, RRF fusion (k=60), cross-encoder rerank
+- [x] Generation with enforced, structured citations
+- [x] Citation verification (lexical + LLM-judge)
+- [x] **Evaluation harness** (increment 2) — retrieval metrics (recall@k · nDCG@k · MRR) + paired bootstrap CI95, 4-config comparison table, anti-leakage guards, reproducible via `make eval`
+- [x] FastAPI service with streaming + observability
+- [x] Docker Compose + CI + tests
+- [ ] _(increment 3)_ RAGAS faithfulness + attribution_rate LLM-judged aggregation
 - [ ] _(optional)_ Self-corrective RAG (LangGraph)
 
 ## Development

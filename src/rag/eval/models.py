@@ -13,6 +13,12 @@ diffable and a stored eval run is reproducible after the fact:
 * :class:`BootstrapResult` — the output of a paired percentile bootstrap; it lives here (not
   in ``bootstrap.py``) so ``bootstrap.py`` imports it without a module cycle.
 * :class:`ConfigComparison` — one baseline-vs-treatment comparison on a single metric.
+* :class:`EvalProvenance` — the reproducibility/publishability header of one harness run
+  (embedder class, git SHA, corpus SHA-256, ``k_values`` / ``seed`` / ``B`` / ``n``, and the
+  ``publishable`` flag that goes ``False`` the moment a fake backend produced the rankings).
+* :class:`EvalReport` — the immutable snapshot a ``make eval`` run dumps to
+  ``eval_results.json``: provenance + per-config :class:`RetrievalMetrics` + the
+  :class:`ConfigComparison` bootstrap table.
 
 Every model is ``frozen``: an eval record is an immutable snapshot of one run, mirroring the
 frozen :class:`~rag.retrieval.models.RetrievalResult`. ``recall``/``ndcg`` dicts are stored
@@ -155,3 +161,55 @@ class ConfigComparison(BaseModel):
     treatment: str
     metric: str
     bootstrap: BootstrapResult
+
+
+class EvalProvenance(BaseModel):
+    """Reproducibility + publishability header for one harness run.
+
+    Carries everything a skeptical reader needs to (a) reproduce the bootstrap intervals
+    (``seed`` / ``n_resamples`` and the ``numpy`` version inside ``library_versions``) and
+    (b) judge whether the numbers may be published. ``publishable`` is ``False`` whenever a
+    fake/offline backend (e.g. :class:`~rag.indexing.embeddings.HashingEmbedder`) produced the
+    rankings, so an offline/test run can never be mistaken for a real benchmark. ``n_queries``
+    is recorded next to every interval downstream so a tight CI on a small ``n`` is never
+    oversold.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    embedder_class: str
+    reranker_class: str
+    git_sha: str | None
+    corpus_sha256: str
+    corpus_dir: str
+    library_versions: dict[str, str | None]
+    k_values: tuple[int, ...]
+    k_retrieve: int
+    seed: int
+    n_resamples: int
+    n_queries: int
+    headline_metric: str
+    secondary_metric: str
+    publishable: bool
+
+    @field_validator("k_values")
+    @classmethod
+    def _sort_k_values(cls, value: tuple[int, ...]) -> tuple[int, ...]:
+        """Sort the reported cutoffs ascending so the provenance dumps deterministically."""
+        return tuple(sorted(value))
+
+
+class EvalReport(BaseModel):
+    """Immutable snapshot of one full eval run: provenance + per-config metrics + comparisons.
+
+    This is the object a ``make eval`` run dumps (sorted keys) to ``eval_results.json`` as the
+    byte-diffable, reproducible artifact. ``configs`` and ``comparisons`` are stored as tuples
+    whose element order is meaningful (the harness fixes the config order and the comparison
+    order) and is preserved across dumps, so two reproducible runs serialize byte-identically.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    provenance: EvalProvenance
+    configs: tuple[RetrievalMetrics, ...]
+    comparisons: tuple[ConfigComparison, ...]

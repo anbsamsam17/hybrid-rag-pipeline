@@ -202,4 +202,5 @@ bit-exactly across environments.
 ## Cross-links
 
 Linked from `docs/architecture.md` (Decisions). The harness increment that consumes these
-contracts (and the actual measured comparison numbers + CI95) will reference this ADR.
+contracts (and the actual measured comparison numbers + CI95) is
+[ADR-0005](ADR-0005-retrieval-eval-harness.md).

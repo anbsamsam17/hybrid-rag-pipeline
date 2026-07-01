@@ -17,6 +17,7 @@ breaks ties by incoming order.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from rag.config import Settings
 from rag.indexing.embeddings import Embedder
@@ -34,6 +35,29 @@ logger = logging.getLogger(__name__)
 # top_k_rerank gives the cross-encoder enough recall to reorder from without hydrating the
 # entire fused list. Bounded so a huge corpus can't blow up the rerank batch.
 _RERANK_POOL_MULTIPLIER = 4
+
+
+def _coerce_list(val: object) -> list[str]:
+    """Coerce a payload value (typed ``object``) to ``list[str]`` via isinstance narrowing.
+
+    Payload dicts are typed ``dict[str, object]`` so ``.get()`` returns ``object``;
+    ``list(object)`` has no matching overload for mypy. This helper narrows the type at
+    the call site without ``cast`` or ``# type: ignore``.
+    """
+    if isinstance(val, list):
+        return [str(item) for item in val]
+    return []
+
+
+def _coerce_dict(val: object) -> dict[str, Any]:
+    """Coerce a payload value (typed ``object``) to ``dict[str, Any]`` via isinstance narrowing.
+
+    Same motivation as :func:`_coerce_list`: avoids the ``dict(object)`` overload error
+    that mypy raises when the source dict's value type is ``object``.
+    """
+    if isinstance(val, dict):
+        return {str(k): v for k, v in val.items()}
+    return {}
 
 
 class HybridRetriever:
@@ -112,8 +136,8 @@ class HybridRetriever:
                     rank=provisional_rank,
                     text=str(payload.get("text", "")),
                     rel_path=str(payload.get("rel_path", "")),
-                    heading_path=list(payload.get("heading_path") or []),
-                    metadata=dict(payload.get("metadata") or {}),
+                    heading_path=_coerce_list(payload.get("heading_path")),
+                    metadata=_coerce_dict(payload.get("metadata")),
                     sources=sources,
                 )
             )

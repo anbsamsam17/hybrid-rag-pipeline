@@ -108,7 +108,7 @@ An optional **self-corrective RAG** layer (LangGraph) grades retrieved documents
 - [x] Citation verification (lexical + LLM-judge)
 - [x] **Evaluation harness** (increment 2) — retrieval metrics (recall@k · nDCG@k · MRR) + paired bootstrap CI95, 4-config comparison table, anti-leakage guards, reproducible via `make eval`
 - [x] FastAPI service with streaming + observability
-- [x] Docker Compose + CI + tests
+- [x] Docker Compose + GitHub Actions CI (ruff · black · mypy · pytest) + tests
 - [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; numbers intentionally unpublished until a reproducible real-LLM run
 - [ ] _(increment 3b)_ RAGAS faithfulness + answer-relevance
 - [ ] _(optional)_ Self-corrective RAG (LangGraph)

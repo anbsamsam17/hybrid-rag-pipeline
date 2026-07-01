@@ -213,3 +213,88 @@ class EvalReport(BaseModel):
     provenance: EvalProvenance
     configs: tuple[RetrievalMetrics, ...]
     comparisons: tuple[ConfigComparison, ...]
+
+
+# --- Attribution-rate aggregation (ADR-0006) ---------------------------------------------------
+# These models are the typed contract for the golden-set aggregate of the MEASURED per-answer
+# attribution_rate produced by ``rag.verification.citations.verify_answer`` (grounded citations /
+# total citations). They deliberately mirror the retrieval-eval models' discipline (frozen,
+# diffable, publishable-flag) but are a SEPARATE, dedicated shape — an attribution run is a
+# single-config LLM measurement with no bootstrap CI (LLM generation is not bit-exact
+# reproducible), so reusing EvalProvenance/EvalReport would carry irrelevant seed/B/comparison
+# fields and drop the LLM identity that makes an attribution number defensible.
+
+
+class AttributionQueryRecord(BaseModel):
+    """One golden query's attribution outcome (the per-query distribution the report exposes).
+
+    ``attribution_rate`` is the MEASURED per-answer rate from ``verify_answer`` (``n_grounded /
+    n_citations``, or ``0.0`` when there are no citations). ``abstained`` is exactly
+    ``n_citations == 0``: it separates "the model cited nothing" from "the model cited but the
+    span did not ground" (which scores ``0.0`` *with* citations), so a reader can never confuse an
+    abstention with a grounding failure.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    query_id: str
+    n_citations: int = Field(ge=0)
+    n_grounded: int = Field(ge=0)
+    attribution_rate: Score
+    abstained: bool
+
+
+class AttributionProvenance(BaseModel):
+    """Reproducibility + publishability header for one attribution run.
+
+    Records the LLM identity (``llm_class`` / ``llm_model``) alongside the retrieval backends and
+    the corpus fingerprint, because an attribution number is only defensible if the reader knows
+    which generator and which real backends produced it. ``publishable`` is ``True`` only when the
+    LLM, embedder, AND reranker are all the real classes — any fake flips it to ``False`` so an
+    offline/test run can never be mistaken for a benchmark. ``single_run`` records that this is a
+    point estimate with no bootstrap CI (LLM generation is not bit-exact reproducible, so an
+    intra-run bootstrap would manufacture false precision — see ADR-0006).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    llm_class: str
+    llm_model: str
+    embedder_class: str
+    reranker_class: str
+    top_k_rerank: int
+    git_sha: str | None
+    corpus_sha256: str
+    corpus_dir: str
+    library_versions: dict[str, str | None]
+    n_queries: int
+    single_run: bool = True
+    publishable: bool
+
+
+class AttributionReport(BaseModel):
+    """Immutable snapshot of one attribution run over the golden set (ADR-0006).
+
+    The HEADLINE is ``micro_attribution_rate`` — pooled ``total_grounded / total_citations`` —
+    which is immune to the 0-citation → 0.0 convention (an abstaining query contributes no
+    citations to either pool rather than a hard 0.0). ``macro_attribution_rate`` (mean of the
+    per-query rates, abstentions counted as 0.0) is reported as SECONDARY, together with
+    ``macro_attribution_rate_answered`` (macro over answered queries only) and ``n_abstained`` so
+    the effect of abstentions is always visible and macro-only reporting — which conflates "cited
+    but wrong" with "abstained" — is never the sole number. This measures GROUNDING (are cited
+    spans supported), not correctness or completeness of the answer.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    provenance: AttributionProvenance
+    config: str
+    n_queries: int
+    total_citations: int
+    total_grounded: int
+    micro_attribution_rate: Score
+    macro_attribution_rate: Score
+    macro_attribution_rate_answered: Score
+    n_answered: int
+    n_abstained: int
+    per_query: tuple[AttributionQueryRecord, ...]

@@ -25,8 +25,15 @@ Corpus ─▶ ingestion/    loaders (PDF/DOCX/MD/HTML) → chunking (fixed | rec
                             public corpus), emits byte-diffable JSON artifact + console report.
                           · k_values = (1, 3, 5, 10); headline metric = nDCG@10; secondary = recall@5.
                           · Runs via `make eval` → `python -m rag.eval.harness`.
-                        [RAGAS faithfulness/answer-relevance + attribution_rate aggregation
-                         forthcoming — increment 3, requires LLM judge]
+                          · attribution.py — attribution_rate aggregation (increment 3a, ADR-0006):
+                            reuses verify_answer + generate_answer over hybrid+rerank @ top_k_rerank,
+                            shares prepare_hermetic_eval with the harness; micro (pooled) headline +
+                            macro + macro-over-answered + n_abstained; NO CI (LLM not bit-exact);
+                            publishable only when LLM+embedder+reranker are all real. Offline-fake
+                            tested (byte-stable). Runs via `make eval-attribution` →
+                            `python -m rag.eval.attribution` (LLM-required; NOT part of `make eval`).
+                        [RAGAS faithfulness/answer-relevance forthcoming — later increment,
+                         requires LLM judge]
 ```
 
 Configuration is centralized in `src/rag/config.py` (`Settings`). Each `src/rag/<module>`
@@ -51,6 +58,14 @@ authors, `docs-historian` formats and cross-links).
   not warn: golden-path, eval-corpus-is-public, golden-coverage; paired bootstrap CI95 on
   headline nDCG@10 + secondary recall@5; pre-registered PRIMARY endpoint for multiplicity
   mitigation; byte-diffable JSON artifact + console report with `publishable` flag).
+- [ADR-0006](decisions/ADR-0006-attribution-rate-aggregation.md) — **Attribution-rate
+  aggregation** (offline-fake-first): a separate `make eval-attribution` entry point that reuses
+  `verify_answer` + `generate_answer` over the real answering config (hybrid+rerank @
+  `top_k_rerank`), sharing the hermetic build + anti-leakage guards via the extracted
+  `prepare_hermetic_eval`; micro (pooled) headline immune to the 0-citation convention, macro +
+  macro-over-answered + `n_abstained` secondary; no CI in v1 (LLM not bit-exact reproducible);
+  `publishable` only when LLM + embedder + reranker are all real; measures grounding, not
+  correctness. `make eval` stays LLM-free.
 
 ### Retrieval & indexing (increments 1–2)
 

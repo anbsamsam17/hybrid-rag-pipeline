@@ -132,6 +132,26 @@ class _ConfigRun:
     rr: list[float] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class HermeticEval:
+    """The hermetic, leak-guarded eval scope shared by every golden-set harness.
+
+    Produced once by :func:`prepare_hermetic_eval` and consumed by both the retrieval harness
+    (:func:`run_eval`) and the attribution harness (``rag.eval.attribution.run_attribution_eval``)
+    so the anti-leakage guards + the eval-scoped index build live in exactly ONE place and can
+    never drift between the two callers. Carries the eval-scoped ``Settings`` (sample corpus,
+    ``*_eval`` collection, ``storage_dir/eval``), the resolved ``embedder`` / ``store`` (the SAME
+    instances the caller must retrieve with), the loaded BM25 index, and the golden set in the
+    frozen file order both harnesses iterate.
+    """
+
+    eval_settings: Settings
+    embedder: Embedder
+    store: VectorStore
+    bm25: BM25Index
+    golden: list[GoldenItem]
+
+
 def _check_golden_not_in_corpus(golden_path: Path, corpus_dir: Path) -> None:
     """Guard 1: the golden set must not live under the indexed corpus (test-on-train leak)."""
     golden = golden_path.resolve()
@@ -186,6 +206,87 @@ def _is_publishable(embedder: Embedder, reranker: Reranker) -> bool:
     return (
         type(embedder).__name__ == _PUBLISHABLE_EMBEDDER
         and type(reranker).__name__ == _PUBLISHABLE_RERANKER
+    )
+
+
+def prepare_hermetic_eval(
+    settings: Settings,
+    *,
+    embedder: Embedder | None = None,
+    store: VectorStore | None = None,
+) -> HermeticEval:
+    """Build the hermetic, leak-guarded eval scope every golden-set harness runs against.
+
+    This is the SINGLE source of the hermetic build + the anti-leakage guards (ADR-0005 §4), so
+    :func:`run_eval` and ``rag.eval.attribution.run_attribution_eval`` share exactly one copy and
+    the guards can never drift between them. It:
+
+    1. derives the eval-scoped ``Settings`` (index the public ``sample_dir`` into a ``*_eval``
+       collection under ``storage_dir/eval``; in Qdrant on-disk mode also redirect ``qdrant_path``
+       under ``storage_dir/eval/qdrant`` for true on-disk isolation);
+    2. runs the path-only guards **before** any build — the golden set may not live under the
+       indexed corpus, and the eval corpus (``sample_dir``) may not be the private prod corpus
+       (``corpus_dir``) — then loads the golden set up front so a malformed label also fails early;
+    3. lazily resolves the REAL backends only when none were injected (loud failure if absent);
+    4. builds the eval-scoped index, loads the BM25 index, and runs the coverage guard — every
+       golden relevant id must be present in the built index, else hard-fail.
+
+    Args:
+        settings: Pipeline settings. ``sample_dir`` / ``golden_path`` / chunking config must match
+            the config that minted the golden set, or the coverage guard fails.
+        embedder: Injected embedder; defaults (lazily) to the real ``bge-small`` embedder.
+        store: Injected vector store; defaults to a Qdrant store from the eval settings.
+
+    Returns:
+        A :class:`HermeticEval` carrying ``eval_settings`` + the resolved ``embedder`` / ``store``
+        (the SAME instances to retrieve with), the loaded ``bm25`` index, and the frozen-order
+        ``golden`` set.
+
+    Raises:
+        EvalLeakageError: If the golden set lives under the indexed corpus, or the eval corpus
+            (``sample_dir``) resolves to the private prod corpus (``corpus_dir``).
+        GoldenCoverageError: If any golden relevant id is missing from the built index.
+        ImportError: If a real backend is required (none injected) but its dependency is absent —
+            a loud, actionable failure, never a silent fake fallback.
+    """
+    # Hermetic eval scope: sample corpus, an *_eval collection, an eval-only storage dir. In
+    # Qdrant on-disk mode we ALSO redirect qdrant_path under storage_dir/eval/qdrant so the eval
+    # vectors are truly isolated on disk (and can't deadlock on a prod-locked on-disk store); in
+    # server mode (qdrant_url) the eval-scoped collection name is sufficient isolation.
+    eval_storage_dir = settings.storage_dir / "eval"
+    update: dict[str, object] = {
+        "corpus_dir": settings.sample_dir,
+        "qdrant_collection": settings.qdrant_collection + "_eval",
+        "storage_dir": eval_storage_dir,
+    }
+    if settings.qdrant_path:
+        update["qdrant_path"] = str(eval_storage_dir / "qdrant")
+    eval_settings = settings.model_copy(update=update)
+
+    # Guards 1 + 3 are path-only and run BEFORE any build, so we never index a leaky/private
+    # corpus: the golden set must not live under the indexed corpus, and the eval corpus
+    # (sample_dir) must not be the private prod corpus. Then load the golden set up front so a
+    # malformed label also fails before the build.
+    _check_golden_not_in_corpus(settings.golden_path, eval_settings.corpus_dir)
+    _check_eval_corpus_is_public(eval_settings.corpus_dir, settings.corpus_dir)
+    golden = load_golden(settings.golden_path)
+
+    # Lazy DI: resolve the REAL backends only when none were injected (loud failure if absent).
+    embedder = embedder or get_embedder(settings)
+    store = store or QdrantVectorStore.from_settings(eval_settings)
+
+    build_index(eval_settings, embedder=embedder, store=store)
+    bm25 = BM25Index.load(eval_settings.storage_dir)
+
+    # Guard 4: every golden relevant id must actually be present in the built index.
+    _check_golden_coverage(golden, bm25)
+
+    return HermeticEval(
+        eval_settings=eval_settings,
+        embedder=embedder,
+        store=store,
+        bm25=bm25,
+        golden=golden,
     )
 
 
@@ -356,39 +457,20 @@ def run_eval(
         ImportError: If a real backend is required (none injected) but its dependency is absent
             — a loud, actionable failure, never a silent fake fallback.
     """
-    # Hermetic eval scope: sample corpus, an *_eval collection, an eval-only storage dir. In
-    # Qdrant on-disk mode we ALSO redirect qdrant_path under storage_dir/eval/qdrant so the eval
-    # vectors are truly isolated on disk (and can't deadlock on a prod-locked on-disk store); in
-    # server mode (qdrant_url) the eval-scoped collection name is sufficient isolation.
-    eval_storage_dir = settings.storage_dir / "eval"
-    update: dict[str, object] = {
-        "corpus_dir": settings.sample_dir,
-        "qdrant_collection": settings.qdrant_collection + "_eval",
-        "storage_dir": eval_storage_dir,
-    }
-    if settings.qdrant_path:
-        update["qdrant_path"] = str(eval_storage_dir / "qdrant")
-    eval_settings = settings.model_copy(update=update)
-
-    # Guards 1 + 3 are path-only and run BEFORE any build, so we never index a leaky/private
-    # corpus: the golden set must not live under the indexed corpus, and the eval corpus
-    # (sample_dir) must not be the private prod corpus. Then load the golden set up front so a
-    # malformed label also fails before the build.
-    _check_golden_not_in_corpus(settings.golden_path, eval_settings.corpus_dir)
-    _check_eval_corpus_is_public(eval_settings.corpus_dir, settings.corpus_dir)
-    golden = load_golden(settings.golden_path)
-    n_queries = len(golden)
-
-    # Lazy DI: resolve the REAL backends only when none were injected (loud failure if absent).
-    embedder = embedder or get_embedder(settings)
-    store = store or QdrantVectorStore.from_settings(eval_settings)
+    # Resolve the REAL reranker default BEFORE the hermetic build so the DI-resolution order is
+    # exactly the pre-extraction one (ADR-0005 "behavior unchanged"): all backends resolve ahead
+    # of build_index, so a missing reranker dependency fails before an index is needlessly built.
     reranker = reranker or get_reranker(settings)
 
-    build_index(eval_settings, embedder=embedder, store=store)
-    bm25 = BM25Index.load(eval_settings.storage_dir)
-
-    # Guard 4: every golden relevant id must actually be present in the built index.
-    _check_golden_coverage(golden, bm25)
+    # Hermetic build + anti-leakage guards live in the shared helper (single source of truth,
+    # reused by the attribution harness); it raises before any number is trusted.
+    prepared = prepare_hermetic_eval(settings, embedder=embedder, store=store)
+    eval_settings = prepared.eval_settings
+    embedder = prepared.embedder
+    store = prepared.store
+    bm25 = prepared.bm25
+    golden = prepared.golden
+    n_queries = len(golden)
 
     dense = DenseRetriever(embedder, store)
     sparse = SparseRetriever(bm25)

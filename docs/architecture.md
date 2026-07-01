@@ -61,4 +61,6 @@ authors, `docs-historian` formats and cross-links).
 ## Evaluation-first
 
 No metric reaches the README unless it is reproducible from `make eval` over the committed
-golden set. See [`../data/README.md`](../data/README.md) for the corpus/eval data layout.
+golden set. See [`../README.md#evaluation-results`](../README.md#evaluation-results) for the
+published comparison table (4 retrieval configurations, paired bootstrap CI95 on recall@k /
+nDCG@k / MRR). See [`../data/README.md`](../data/README.md) for the corpus/eval data layout.

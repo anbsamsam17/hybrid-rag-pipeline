@@ -108,7 +108,9 @@ indexed." A warning would let a corrupted run produce authoritative-looking numb
 5. **Paired bootstrap** on per-query vectors built in the **frozen golden order** (index `i` =
    the same query in both arms). Four comparisons (dense→hybrid, sparse→hybrid,
    hybrid→hybrid+rerank, dense→hybrid+rerank) on both the headline (nDCG@10) and secondary
-   (recall@5) metric, `B = 10000`, `seed = 12345`, `n = 16`. `n` is printed next to every
+   (recall@5) metric, `B = 10000`, `seed = 12345`, `n = 16` (illustrative — `n` is derived from
+   the committed golden set at run time, not fixed; the golden set has since grown). `n` is
+   printed next to every
    interval; a non-significant diff is never presented as a win. Because 8 comparisons (4 pairs
    × 2 metrics) are reported, a **single pre-registered PRIMARY endpoint** — nDCG@10, dense-only
    → hybrid+rerank — carries confirmatory weight; the other 7 are secondary/exploratory and the
@@ -136,14 +138,17 @@ Positive:
   and the harness is fully offline-testable.
 
 Negative / accepted:
-- **CIs are wide at n = 16.** This is accepted and must be *signalled*, not hidden: every
-  interval prints `n=16`, and even a "significant" interval is wide at this size. A larger
-  golden set is the only real fix and is deferred.
+- **CIs are wide at small n (illustratively n = 16).** This is accepted and must be *signalled*,
+  not hidden: every interval prints the actual `n` (illustratively `n=16`), and even a
+  "significant" interval is wide at this size. A larger golden set is the only real fix; it is the
+  direction of travel (the set has since grown) and `n` is always read from the golden set, never
+  hard-coded.
 - **Multiplicity across 8 comparisons.** Reporting 4 pairs × 2 metrics inflates the chance of a
   spurious "significant" (~34% under the null). Accepted and mitigated by *pre-registering one
   PRIMARY endpoint* (nDCG@10, dense-only → hybrid+rerank) as the only confirmatory result and
   printing a multiplicity caveat; the other 7 are explicitly exploratory. A formal correction
-  (e.g. Holm) is deferred — at n = 16 the honest framing is "directional", not a corrected p.
+  (e.g. Holm) is deferred — at small n (illustratively n = 16) the honest framing is
+  "directional", not a corrected p.
 - **golden.jsonl is coupled to the chunking config.** The `relevant_chunk_ids` are span-derived
   (`sha256(rel_path:start:end)[:16]`), valid only for the chunk spans the current chunking
   config produces (minted under recursive / 512 / 64). The harness and `scripts/validate_golden.py`
@@ -165,5 +170,8 @@ invariants, determinism, and that the leakage guards raise — never metric valu
 ## Cross-links
 
 Builds on [ADR-0004](ADR-0004-eval-metrics-and-paired-bootstrap.md) (metric definitions + paired
-percentile bootstrap), which is the contract this harness consumes. Linked from
-`docs/architecture.md` (Decisions).
+percentile bootstrap), which is the contract this harness consumes. The hermetic build + the
+anti-leakage guards decided here are extracted into a shared `prepare_hermetic_eval` helper and
+reused by the attribution harness in
+[ADR-0006](ADR-0006-attribution-rate-aggregation.md). Linked from `docs/architecture.md`
+(Decisions).

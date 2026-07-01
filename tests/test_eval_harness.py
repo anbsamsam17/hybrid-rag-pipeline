@@ -20,6 +20,7 @@ pytest.importorskip("qdrant_client")
 pytest.importorskip("rank_bm25")
 
 from rag.config import PROJECT_ROOT, Settings  # noqa: E402
+from rag.eval.golden import load_golden  # noqa: E402
 from rag.eval.harness import (  # noqa: E402
     CONFIG_SPARSE,
     CONFIGS,
@@ -44,6 +45,11 @@ from rag.retrieval.rerank import LexicalOverlapReranker  # noqa: E402
 
 SAMPLE_DIR = PROJECT_ROOT / "data" / "sample"
 GOLDEN_PATH = PROJECT_ROOT / "data" / "eval" / "golden.jsonl"
+
+# Derive n from the committed golden set — NEVER hard-code it. The offline tests bind to the
+# real data/eval/golden.jsonl, so growing the golden set (16 -> 50 -> ...) must keep these
+# assertions correct without an edit; a hard-coded n would silently rot the moment it changes.
+N_GOLDEN = len(load_golden(GOLDEN_PATH))
 
 
 def _settings(storage: Path, **overrides: object) -> Settings:
@@ -89,7 +95,7 @@ def test_run_eval_offline_structure(tmp_path: Path) -> None:
         assert cfg.n_queries == report.provenance.n_queries
 
     prov = report.provenance
-    assert prov.n_queries == 16
+    assert prov.n_queries == N_GOLDEN
     assert prov.k_retrieve == K_RETRIEVE == max(K_VALUES)
     assert prov.seed == SEED
     assert prov.n_resamples == N_RESAMPLES
@@ -117,7 +123,7 @@ def test_run_eval_comparison_invariants(tmp_path: Path) -> None:
         assert comp.treatment in names
         assert comp.baseline != comp.treatment
         boot = comp.bootstrap
-        assert boot.n_queries == 16
+        assert boot.n_queries == N_GOLDEN
         assert boot.n_resamples == N_RESAMPLES
         assert boot.seed == SEED
         # significance must be consistent with the recorded interval (no contradictory flag).
@@ -159,7 +165,7 @@ def test_run_eval_writes_byte_stable_artifact(tmp_path: Path) -> None:
 
 def test_render_report_states_n_and_flags_non_publishable(tmp_path: Path) -> None:
     text = render_report(_run(_settings(tmp_path / "storage")))
-    assert "n=16" in text
+    assert f"n={N_GOLDEN}" in text
     assert "NOT PUBLISHABLE" in text
     # Every config appears as a table row.
     for name in CONFIGS:
@@ -197,7 +203,7 @@ def test_guard_golden_under_corpus_raises(tmp_path: Path) -> None:
 
 
 def test_guard_golden_coverage_failure_raises(tmp_path: Path) -> None:
-    # Index an unrelated corpus while keeping the real golden set: none of its 16 ids can be
+    # Index an unrelated corpus while keeping the real golden set: none of its ids can be
     # present, so the coverage guard must hard-fail with the canonical message.
     corpus = tmp_path / "othercorpus"
     corpus.mkdir()

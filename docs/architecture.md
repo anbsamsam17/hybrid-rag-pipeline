@@ -69,9 +69,20 @@ authors, `docs-historian` formats and cross-links).
 
 ### Retrieval & indexing (increments 1–2)
 
-- ADR-0001 — hybrid retrieval (dense + sparse) over dense-only _(to be written)_
-- ADR-0002 — Reciprocal Rank Fusion (k=60) over weighted score fusion _(to be written)_
-- ADR-0003 — chunking strategy choice (recursive 512/64), justified by retrieval metrics _(to be written)_
+- [ADR-0001](decisions/ADR-0001-hybrid-retrieval.md) — **Hybrid retrieval (dense + sparse)**
+  over dense-only: robust coverage across lexical+semantic queries; four-way comparison
+  (dense / sparse / hybrid / hybrid+rerank) with paired bootstrap CI95; honest caveats
+  (n=50 underpowered, RRF alone does not beat BM25 on this corpus, BM25 strength is
+  corpus-specific).
+- [ADR-0002](decisions/ADR-0002-reciprocal-rank-fusion.md) — **Reciprocal Rank Fusion (k=60),
+  hand-written**, over weighted score fusion: score-scale-independent; one literature-default
+  hyperparameter; deterministic and tie-stable; pure and dependency-free; no head-to-head
+  weighted-fusion ablation (decision rests on reproducibility/overfitting, not a measured win).
+- [ADR-0003](decisions/ADR-0003-chunking-strategy.md) — **Chunking strategy: recursive
+  character splitter, 512 / 64 (chars)**, over fixed or semantic: boundary quality (para/line/sentence);
+  determinism (ids span-derived); the golden set is frozen to this config, so any change
+  invalidates it and requires re-minting; no eval sweep vs alternatives (corpus-specific
+  selection, not measured).
 
 ## Evaluation-first
 

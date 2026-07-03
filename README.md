@@ -81,10 +81,25 @@ Corpus ─▶ Ingestion (loaders, chunking strategies)
                       sparse ┼─▶ RRF fusion ─▶ cross-encoder rerank)
        ─▶ Generation (citation-enforced prompt → structured output)
        ─▶ Verification (each citation ↔ source span)
+       ─▶ (Optional) Self-corrective RAG: grade docs → rewrite query → retry retrieval;
+                     verify answer → regenerate on low grounding
        ─▶ Eval harness (recall@k · nDCG@k · MRR · faithfulness · attribution)
 ```
 
-An optional **self-corrective RAG** layer (LangGraph) grades retrieved documents and rewrites the query on low relevance before generating.
+### Self-corrective RAG (optional, opt-in)
+
+An optional **self-corrective RAG** layer ([ADR-0007](docs/decisions/ADR-0007-self-corrective-rag-stategraph.md)) composes a bounded LangGraph `StateGraph` on top of the existing retrieval, generation, and verification pipeline. It implements two feedback loops:
+
+1. **Grade → rewrite → retry retrieval.** After retrieval, an LLM grades each retrieved chunk's relevance. If too few docs are relevant (default: `< 1`), the query is rewritten and retrieval retried, up to `agentic_max_query_rewrites` times (default: 2, so ≤ 3 total retrievals).
+2. **Verify → regenerate → retry generation.** After generation, the attribution checker scores grounding. If the answer has unsupported citations, it is regenerated, up to `agentic_max_regenerations` times (default: 1, so ≤ 2 total generations). Honest 0-citation abstentions are accepted and never retried.
+
+**Constraints:**
+- **Opt-in only** (`agentic_enabled=False` by default). The base single-pass pipeline (retrieve → generate → verify) is the unchanged default.
+- **Provably bounded.** Two strictly-monotonic counters plus a derived `recursion_limit = (R+1)*3 + (G+1)*3 + 5` backstop guarantee termination.
+- **Degrades gracefully.** On budget exhaustion, returns the best-effort answer with its **measured** `VerificationReport` and a trace; never raises or loops.
+- **Pure composition.** Reuses existing `HybridRetriever.retrieve()`, `generate_answer()`, and `verify_answer()` verbatim; no fusion/rerank/attribution logic is duplicated.
+
+**Evaluation status:** _(intentionally not yet measured)_ — no corrective-vs-baseline numbers are published. The impact of query rewriting on retrieval recall and of regeneration on grounding rate are the key signals. When measured, they will be reported via a paired bootstrap comparison over the golden set alongside n_rewrites and n_regenerations costs, with a regression guard (must not reduce attribution below baseline).
 
 ## Tech stack
 
@@ -112,7 +127,7 @@ An optional **self-corrective RAG** layer (LangGraph) grades retrieved documents
 - [x] Docker Compose + GitHub Actions CI (ruff · black · mypy · pytest) + tests
 - [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; numbers intentionally unpublished until a reproducible real-LLM run
 - [ ] _(increment 3b)_ RAGAS faithfulness + answer-relevance
-- [ ] _(optional)_ Self-corrective RAG (LangGraph)
+- [x] _(increment 4)_ **Self-corrective RAG** (LangGraph `StateGraph` over the existing pipeline; opt-in via `agentic_enabled=False`; two bounded feedback loops: grade+rewrite retrieval, verify+regenerate generation; provably terminates via recursion limit; offline-testable with deterministic fakes; evaluation deferred)
 
 ## Development
 

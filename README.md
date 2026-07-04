@@ -46,6 +46,35 @@ The differentiator is not the stack — it is the **evaluation rigor** and the *
 - **BM25 (sparse-only) is a surprisingly strong baseline** on this factual corpus (nDCG@10 = 0.971), outperforming dense-only (0.935). Dense embedding quality is data-dependent, not free.
 - **Sample size (n=50)** means wider confidence intervals. Larger evaluation sets (e.g., n≥200) would tighten bounds and may reveal true wins or losses.
 
+### Attribution rate (measured)
+
+**Configuration:** hybrid+rerank, top_k_rerank=5
+
+**Result:** micro (pooled) attribution_rate = **1.000** (57/57 grounded citations across all 50 answered queries)
+
+**Secondary metrics:**
+- Macro attribution_rate: 1.000
+- Macro over answered queries: 1.000 (n_answered=50)
+- Abstentions: 0/50
+
+**Mandatory caveats:**
+
+Measures grounding, not correctness: every supporting quote is a real span of its cited chunk; says nothing about factual correctness vs. reference answers, completeness, or whether every claim is cited.
+
+Single run, no CI — LLM generation is not bit-exact reproducible; point estimate only.
+
+n=50 in a small easy-corpus regime (12 docs / 39 chunks, single-fact verbatim-quotable queries, top-5 contexts); a 1.000 here will not generalize to larger/noisier corpora or multi-hop queries.
+
+Verification is lexical (normalized substring / hardened token-overlap vs. the cited chunk only), not semantic entailment.
+
+**Provenance (distinct from retrieval table above):**
+- git commit: 57659b52e465
+- corpus SHA-256: beb2701a7daea638
+- Embedder: BAAI/bge-small-en-v1.5 (SentenceTransformer)
+- Reranker: BAAI/bge-reranker-base (top_k=5)
+- LLM: Claude Sonnet 4.6 (verification)
+- Reproducible via: `make eval-attribution` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
+
 ### Reproducibility
 
 **Provenance:**
@@ -125,7 +154,7 @@ An optional **self-corrective RAG** layer ([ADR-0007](docs/decisions/ADR-0007-se
 - [x] **Evaluation harness** (increment 2) — retrieval metrics (recall@k · nDCG@k · MRR) + paired bootstrap CI95, 4-config comparison table, anti-leakage guards, reproducible via `make eval`
 - [x] FastAPI service with streaming + observability
 - [x] Docker Compose + GitHub Actions CI (ruff · black · mypy · pytest) + tests
-- [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; numbers intentionally unpublished until a reproducible real-LLM run
+- [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; published in [`README.md § Attribution rate (measured)`](#attribution-rate-measured)
 - [ ] _(increment 3b)_ RAGAS faithfulness + answer-relevance
 - [x] _(increment 4)_ **Self-corrective RAG** (LangGraph `StateGraph` over the existing pipeline; opt-in via `agentic_enabled=False`; two bounded feedback loops: grade+rewrite retrieval, verify+regenerate generation; provably terminates via recursion limit; offline-testable with deterministic fakes; evaluation deferred)
 

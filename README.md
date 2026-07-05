@@ -53,7 +53,8 @@ The differentiator is not the stack — it is the **evaluation rigor** and the *
 - Reranker: BAAI/bge-reranker-base (cross-encoder)
 - Corpus: data/sample (12 documents, 39 chunks)
 - Golden set: 50 labeled queries (lexical + semantic)
-- git commit: 7e8ccb3
+- git commit: 9284155 (re-measured after a history rewrite changed commit SHAs; all
+  metrics reproduced bit-identical to the original 50-query run — trees unchanged)
 - corpus SHA-256: beb2701a
 - Bootstrap: seed=12345, B=10000, paired percentile CI95
 - numpy: 2.1.3

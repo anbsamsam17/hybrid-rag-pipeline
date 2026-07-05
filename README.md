@@ -50,7 +50,7 @@ The differentiator is not the stack — it is the **evaluation rigor** and the *
 
 **Configuration:** hybrid+rerank, top_k_rerank=5
 
-**Result:** micro (pooled) attribution_rate = **1.000** (57/57 grounded citations across all 50 answered queries)
+**Result:** micro (pooled) attribution_rate = **1.000** (55/55 grounded citations across all 50 answered queries; an earlier run at a pre-rewrite SHA measured 1.000 on 57/57 — the citation count varies run-to-run, which is exactly why no CI is claimed)
 
 **Secondary metrics:**
 - Macro attribution_rate: 1.000
@@ -68,7 +68,7 @@ n=50 in a small easy-corpus regime (12 docs / 39 chunks, single-fact verbatim-qu
 Verification is lexical (normalized substring / hardened token-overlap vs. the cited chunk only), not semantic entailment.
 
 **Provenance (distinct from retrieval table above):**
-- git commit: 57659b52e465
+- git commit: de64733fc458
 - corpus SHA-256: beb2701a7daea638
 - Embedder: BAAI/bge-small-en-v1.5 (SentenceTransformer)
 - Reranker: BAAI/bge-reranker-base (top_k=5)

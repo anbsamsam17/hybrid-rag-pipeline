@@ -178,5 +178,6 @@ deps are missing):
 - Re-run `make test` + `make lint` before claiming a feature is done.
 - After any retrieval/eval/verification change, re-measure via `/eval-report` —
   never report a stale number.
-- End commit messages with:
-  `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`
+- **No AI attribution anywhere public**: never add `Co-Authored-By: Claude …` trailers
+  or "Generated with …" footers to commit messages, PR titles/bodies, or docs. This is
+  a portfolio repo — its git history and PRs are read by recruiters.

@@ -1,0 +1,45 @@
+name: CI
+
+# Quality gates on every push to main and every pull request. Mirrors the
+# Makefile targets (lint / typecheck / test) so `make …` locally == CI.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: lint · typecheck · test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install (editable + dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check src tests
+
+      - name: Format check (black)
+        run: black --check src tests
+
+      - name: Type check (mypy)
+        run: mypy src
+
+      - name: Tests (pytest)
+        # The suite runs fully offline (HashingEmbedder + in-memory Qdrant + fakes):
+        # no torch model download, no network, no API key required.
+        run: pytest -q

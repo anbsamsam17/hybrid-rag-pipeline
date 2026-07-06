@@ -23,3 +23,14 @@ def test_paths_are_under_project_root() -> None:
     # corpus (private) and golden set resolve to concrete paths we can build on later.
     assert s.corpus_dir.name == "corpus"
     assert s.golden_path.name == "golden.jsonl"
+
+
+def test_agentic_defaults() -> None:
+    s = Settings()
+    # Off by default: the base retrieve -> generate -> verify path never depends on this layer.
+    assert s.agentic_enabled is False
+    # Budgets per ADR-0007: <= 3 retrievals, <= 2 generations.
+    assert s.agentic_max_query_rewrites == 2
+    assert s.agentic_max_regenerations == 1
+    assert s.agentic_min_relevant_docs == 1
+    assert s.agentic_min_attribution_rate == 1.0

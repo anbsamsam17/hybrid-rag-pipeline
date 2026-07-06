@@ -66,6 +66,16 @@ class Settings(BaseSettings):
     use_reranker: bool = True
     top_k_rerank: int = Field(default=5, gt=0)
 
+    # --- Agentic (self-corrective RAG) ---
+    # Optional LangGraph controller (ADR-0007): grade -> rewrite -> retry retrieval, and
+    # verify -> regenerate -> retry generation, both under hard retry budgets. Off by default —
+    # the base retrieve -> generate -> verify path never depends on this layer.
+    agentic_enabled: bool = False
+    agentic_max_query_rewrites: int = Field(default=2, ge=0)  # <= 3 retrievals total
+    agentic_max_regenerations: int = Field(default=1, ge=0)  # <= 2 generations total
+    agentic_min_relevant_docs: int = Field(default=1, ge=1)  # low-relevance <=> fewer than this
+    agentic_min_attribution_rate: float = Field(default=1.0, ge=0.0, le=1.0)
+
 
 @lru_cache
 def get_settings() -> Settings:

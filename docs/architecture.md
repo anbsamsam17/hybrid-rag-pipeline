@@ -11,7 +11,15 @@ Corpus ─▶ ingestion/    loaders (PDF/DOCX/MD/HTML) → chunking (fixed | rec
        ─▶ retrieval/    dense.py · sparse.py · fusion.py (RRF, k=60) · rerank.py (cross-encoder)
        ─▶ generation/   citation-enforced prompt → Pydantic Answer/Citation (structured output)
        ─▶ verification/ attribution checker: each claim ↔ its source span (measured rate)
-       ─▶ agentic/      corrective_rag.py — LangGraph StateGraph (optional self-correction)
+       ─▶ agentic/      corrective_rag.py — LangGraph StateGraph (optional self-correction, ADR-0007):
+                          analyze → retrieve → grade docs → (low relevance) rewrite & retry →
+                          generate → verify → (ungrounded) regenerate. Pure composition over the
+                          existing HybridRetriever.retrieve / generate_answer / verify_answer;
+                          TypedDict channel state, Pydantic boundary (CorrectiveRAGRequest/Result);
+                          bounded rewrite + regenerate budgets + derived recursion_limit (provably
+                          terminates); honest abstention accepted (0-citation never regenerated);
+                          degrades to best-effort answer + measured VerificationReport, never raises
+                          or loops. Offline-fake tested; opt-in (agentic_enabled=False by default).
        ─▶ api/          FastAPI: /ingest /query /eval, SSE streaming, observability
        ─▶ eval/         Retrieval evaluation harness (increment 2, complete):
                           · metrics.py — recall@k, nDCG@k, reciprocal_rank, MRR (pure, backend-agnostic)
@@ -66,6 +74,22 @@ authors, `docs-historian` formats and cross-links).
   macro-over-answered + `n_abstained` secondary; no CI in v1 (LLM not bit-exact reproducible);
   `publishable` only when LLM + embedder + reranker are all real; measures grounding, not
   correctness. `make eval` stays LLM-free.
+
+### Agentic (self-corrective RAG, increment 4)
+
+- [ADR-0007](decisions/ADR-0007-self-corrective-rag-stategraph.md) — **Self-corrective RAG layer**
+  as a bounded LangGraph `StateGraph` that **composes on top of** (never duplicates) the existing
+  `HybridRetriever.retrieve` / `generate_answer` / `verify_answer`: nodes `analyze → retrieve →
+  grade docs → (low relevance) rewrite & retry → generate → verify → (ungrounded) regenerate`.
+  TypedDict channel state with a Pydantic boundary (`CorrectiveRAGRequest` / frozen
+  `CorrectiveRAGResult`); a new agentic-owned `CorrectiveLLM` Protocol (batch structured doc-grading
+  + query-rewrite via `messages.parse`, SDK rules honored) leaving the generation contract untouched.
+  Two bounded counters (`agentic_max_query_rewrites=2`, `agentic_max_regenerations=1`) + a derived
+  `recursion_limit` backstop **provably terminate** the graph; honest abstention (0 citations) is
+  accepted and never regenerated; on budget exhaustion it degrades to a best-effort `Answer` + its
+  **measured** `VerificationReport` + a trace, never raising or looping. `langgraph>=0.2` is already a
+  runtime dep (no pyproject change). Offline-fake tested; `agentic_enabled=False` by default; the
+  API surface and a corrective-vs-baseline eval are deferred.
 
 ### Retrieval & indexing (increments 1–2)
 

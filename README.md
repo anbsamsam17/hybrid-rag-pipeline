@@ -46,6 +46,35 @@ The differentiator is not the stack — it is the **evaluation rigor** and the *
 - **BM25 (sparse-only) is a surprisingly strong baseline** on this factual corpus (nDCG@10 = 0.971), outperforming dense-only (0.935). Dense embedding quality is data-dependent, not free.
 - **Sample size (n=50)** means wider confidence intervals. Larger evaluation sets (e.g., n≥200) would tighten bounds and may reveal true wins or losses.
 
+### Attribution rate (measured)
+
+**Configuration:** hybrid+rerank, top_k_rerank=5
+
+**Result:** micro (pooled) attribution_rate = **1.000** (55/55 grounded citations across all 50 answered queries; an earlier run at a pre-rewrite SHA measured 1.000 on 57/57 — the citation count varies run-to-run, which is exactly why no CI is claimed)
+
+**Secondary metrics:**
+- Macro attribution_rate: 1.000
+- Macro over answered queries: 1.000 (n_answered=50)
+- Abstentions: 0/50
+
+**Mandatory caveats:**
+
+Measures grounding, not correctness: every supporting quote is a real span of its cited chunk; says nothing about factual correctness vs. reference answers, completeness, or whether every claim is cited.
+
+Single run, no CI — LLM generation is not bit-exact reproducible; point estimate only.
+
+n=50 in a small easy-corpus regime (12 docs / 39 chunks, single-fact verbatim-quotable queries, top-5 contexts); a 1.000 here will not generalize to larger/noisier corpora or multi-hop queries.
+
+Verification is lexical (normalized substring / hardened token-overlap vs. the cited chunk only), not semantic entailment.
+
+**Provenance (distinct from retrieval table above):**
+- git commit: de64733fc458
+- corpus SHA-256: beb2701a7daea638
+- Embedder: BAAI/bge-small-en-v1.5 (SentenceTransformer)
+- Reranker: BAAI/bge-reranker-base (top_k=5)
+- LLM: Claude Sonnet 4.6 (verification)
+- Reproducible via: `make eval-attribution` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
+
 ### Reproducibility
 
 **Provenance:**
@@ -81,10 +110,25 @@ Corpus ─▶ Ingestion (loaders, chunking strategies)
                       sparse ┼─▶ RRF fusion ─▶ cross-encoder rerank)
        ─▶ Generation (citation-enforced prompt → structured output)
        ─▶ Verification (each citation ↔ source span)
+       ─▶ (Optional) Self-corrective RAG: grade docs → rewrite query → retry retrieval;
+                     verify answer → regenerate on low grounding
        ─▶ Eval harness (recall@k · nDCG@k · MRR · faithfulness · attribution)
 ```
 
-An optional **self-corrective RAG** layer (LangGraph) grades retrieved documents and rewrites the query on low relevance before generating.
+### Self-corrective RAG (optional, opt-in)
+
+An optional **self-corrective RAG** layer ([ADR-0007](docs/decisions/ADR-0007-self-corrective-rag-stategraph.md)) composes a bounded LangGraph `StateGraph` on top of the existing retrieval, generation, and verification pipeline. It implements two feedback loops:
+
+1. **Grade → rewrite → retry retrieval.** After retrieval, an LLM grades each retrieved chunk's relevance. If too few docs are relevant (default: `< 1`), the query is rewritten and retrieval retried, up to `agentic_max_query_rewrites` times (default: 2, so ≤ 3 total retrievals).
+2. **Verify → regenerate → retry generation.** After generation, the attribution checker scores grounding. If the answer has unsupported citations, it is regenerated, up to `agentic_max_regenerations` times (default: 1, so ≤ 2 total generations). Honest 0-citation abstentions are accepted and never retried.
+
+**Constraints:**
+- **Opt-in only** (`agentic_enabled=False` by default). The base single-pass pipeline (retrieve → generate → verify) is the unchanged default.
+- **Provably bounded.** Two strictly-monotonic counters plus a derived `recursion_limit = (R+1)*3 + (G+1)*3 + 5` backstop guarantee termination.
+- **Degrades gracefully.** On budget exhaustion, returns the best-effort answer with its **measured** `VerificationReport` and a trace; never raises or loops.
+- **Pure composition.** Reuses existing `HybridRetriever.retrieve()`, `generate_answer()`, and `verify_answer()` verbatim; no fusion/rerank/attribution logic is duplicated.
+
+**Evaluation status:** _(intentionally not yet measured)_ — no corrective-vs-baseline numbers are published. The impact of query rewriting on retrieval recall and of regeneration on grounding rate are the key signals. When measured, they will be reported via a paired bootstrap comparison over the golden set alongside n_rewrites and n_regenerations costs, with a regression guard (must not reduce attribution below baseline).
 
 ## Tech stack
 
@@ -110,9 +154,9 @@ An optional **self-corrective RAG** layer (LangGraph) grades retrieved documents
 - [x] **Evaluation harness** (increment 2) — retrieval metrics (recall@k · nDCG@k · MRR) + paired bootstrap CI95, 4-config comparison table, anti-leakage guards, reproducible via `make eval`
 - [x] FastAPI service with streaming + observability
 - [x] Docker Compose + GitHub Actions CI (ruff · black · mypy · pytest) + tests
-- [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; numbers intentionally unpublished until a reproducible real-LLM run
+- [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; published in [`README.md § Attribution rate (measured)`](#attribution-rate-measured)
 - [ ] _(increment 3b)_ RAGAS faithfulness + answer-relevance
-- [ ] _(optional)_ Self-corrective RAG (LangGraph)
+- [x] _(increment 4)_ **Self-corrective RAG** (LangGraph `StateGraph` over the existing pipeline; opt-in via `agentic_enabled=False`; two bounded feedback loops: grade+rewrite retrieval, verify+regenerate generation; provably terminates via recursion limit; offline-testable with deterministic fakes; evaluation deferred)
 
 ## Development
 

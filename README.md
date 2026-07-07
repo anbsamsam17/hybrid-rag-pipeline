@@ -75,6 +75,37 @@ Verification is lexical (normalized substring / hardened token-overlap vs. the c
 - LLM: Claude Sonnet 4.6 (verification)
 - Reproducible via: `make eval-attribution` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
 
+### Corrective RAG vs. baseline (measured)
+
+**Configuration:** hybrid+rerank baseline vs. self-corrective RAG pipeline (grade → rewrite → retry + verify → regenerate). Both run over the same top_k_rerank=5 contexts.
+
+**Primary result (pre-registered, deterministic):**
+- Retry-loop activation rate: **0.000** (0/50 queries triggered a rewrite or regeneration)
+- All queries terminated with `grounded` status (50/50)
+- Contexts passed to generation (baseline vs. corrective): identical_rate = **0.000** (0/50) — even at zero activation, the grading step **filtered the context set on all 50 queries**, so generation saw different (typically fewer) supporting chunks despite retry not firing
+
+**Secondary metrics (directional, no CI):**
+- Attribution rate: baseline=1.000, corrective=1.000 (delta=0.000)
+- LLM-judge correctness: baseline=1.000, corrective=1.000 (delta=0.000, n_judged=50)
+- Recall@k (all identical): @1=0.950, @3=1.000, @5=1.000
+- Lexical-F1 (mean): baseline=0.380, corrective=0.398 (delta=+0.018, noise)
+- **Cost:** +1.000 extra LLM call per query (the grading call, paid regardless of activation)
+
+**Interpretation:**
+
+On this easy corpus (12-doc, single-fact queries, top-5 already grounded), the corrective retry loop never fires (0/50). The grading step still runs and filters contexts on all queries, but this produces zero measurable gain: attribution and LLM-judged correctness remain perfect, recall identical, and any F1 delta is generator+judge noise (single run, no CI). **Net effect: +1 LLM call/query for no benefit.** The retry loop is designed for harder, retrieval-failing regimes; this corpus simply does not exercise it. Any correctness or attribution delta is non-reproducible LLM stochasticity and is never claimed as a win.
+
+**Provenance (distinct from retrieval and attribution blocks above):**
+- git commit: 2d40142 (DISTINCT from retrieval commit 9284155 and attribution commit de64733)
+- corpus SHA-256: beb2701a
+- Baseline LLM: Claude Sonnet 4.6 (generation)
+- Corrective LLM: AnthropicCorrectiveLLM (grade + rewrite + regenerate)
+- Judge: Claude Opus 4.8 (correctness, distinct from generator)
+- Embedder: BAAI/bge-small-en-v1.5
+- Reranker: BAAI/bge-reranker-base (top_k=5)
+- n=50, single_run=true, no CI (generation non-reproducible)
+- Reproducible via: `make eval-corrective` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
+
 ### Reproducibility
 
 **Provenance:**

@@ -298,3 +298,152 @@ class AttributionReport(BaseModel):
     n_answered: int
     n_abstained: int
     per_query: tuple[AttributionQueryRecord, ...]
+
+
+# --- Corrective-vs-baseline evaluation (ADR-0008) ----------------------------------------------
+# The typed contract for the paired corrective-vs-baseline comparison over the golden set. The
+# PRIMARY, pre-registered endpoint is the trace-only ``activation_rate`` (does the corrective loop
+# fire at all?), judge-free and byte-stable under fakes; every SECONDARY endpoint (answer
+# correctness, attribution regression guard, recall-on-final-contexts, cost) is directional and
+# expected ~0 delta on this corpus. Like Attribution*, this is a SINGLE-config LLM measurement
+# with no bootstrap CI (generation AND the LLM judge are non-reproducible), so ``single_run=True``
+# and ``publishable`` gates on ALL real backends INCLUDING the judge.
+
+
+class CorrectiveQueryRecord(BaseModel):
+    """One golden query's corrective-vs-baseline outcome (the per-query distribution).
+
+    Carries the trace-derived PRIMARY signals and the paired SECONDARY per-arm measurements.
+    ``activated`` measures ONLY whether the corrective RETRY LOOP fired (``n_rewrites > 0`` or
+    ``n_regenerations > 0``) — it is NOT "the layer did something", because the grade node can
+    still FILTER the context set even when no retry fires. ``contexts_identical`` closes that gap:
+    it is ``True`` iff the two arms generated over the exact same final context list (same
+    chunk_ids in the same order); when ``activated`` is ``False`` but ``contexts_identical`` is
+    also ``False``, the retry loop stayed idle yet grading still changed what generation saw, so
+    the arms are NOT equivalent (``baseline_n_contexts`` vs ``corrective_n_contexts`` shows the
+    filtering). ``final_query_changed`` is the EFFECTIVE rewrite signal (a rewrite actually altered
+    the query text), reported separately because ``n_rewrites`` increments even on an unchanged
+    reformulation. ``*_correct`` is ``None`` for a query with no ``reference_answer`` (excluded from
+    the correctness rate and NOT counted in ``n_judged``).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    query_id: str
+    activated: bool
+    n_rewrites: int = Field(ge=0)
+    n_regenerations: int = Field(ge=0)
+    final_query_changed: bool
+    terminated_reason: str
+    rewrite_budget_exhausted: bool
+    extra_llm_calls: int = Field(ge=0)
+    contexts_identical: bool
+    baseline_n_contexts: int = Field(ge=0)
+    corrective_n_contexts: int = Field(ge=0)
+    baseline_attr_rate: Score
+    corrective_attr_rate: Score
+    baseline_recall: dict[int, Score]
+    corrective_recall: dict[int, Score]
+    baseline_correct: bool | None
+    corrective_correct: bool | None
+    baseline_lexical_f1: Score
+    corrective_lexical_f1: Score
+
+    @field_validator("baseline_recall", "corrective_recall")
+    @classmethod
+    def _sort_k_keys(cls, value: dict[int, Score]) -> dict[int, Score]:
+        """Insert k -> recall pairs in ascending k order for a deterministic dump."""
+        return _sorted_by_key(value)
+
+
+class CorrectiveEvalProvenance(BaseModel):
+    """Reproducibility + publishability header for one corrective-vs-baseline run.
+
+    Records the identity of BOTH LLM roles (generation ``baseline_llm_class`` and the corrective
+    ``corrective_llm_class``) PLUS the correctness ``judge_class`` alongside the retrieval backends
+    and corpus fingerprint, because a corrective-vs-baseline number is only defensible if a reader
+    knows which generator, which corrective controller, and which judge produced it. The agentic
+    budgets are recorded verbatim so the activation/cost accounting is reproducible. ``publishable``
+    is ``True`` ONLY when the generation LLM, corrective LLM, judge, embedder, AND reranker are all
+    the real classes — any fake flips it ``False``. ``single_run`` records the no-CI discipline
+    (generation and the judge are non-reproducible; an intra-run bootstrap = false precision).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    baseline_llm_class: str
+    corrective_llm_class: str
+    judge_class: str
+    embedder_class: str
+    reranker_class: str
+    llm_model: str
+    judge_model: str
+    top_k_rerank: int
+    agentic_max_query_rewrites: int
+    agentic_max_regenerations: int
+    agentic_min_relevant_docs: int
+    agentic_min_attribution_rate: float
+    git_sha: str | None
+    corpus_sha256: str
+    corpus_dir: str
+    library_versions: dict[str, str | None]
+    n_queries: int
+    n_judged: int
+    single_run: bool = True
+    publishable: bool
+
+
+class CorrectiveEvalReport(BaseModel):
+    """Immutable snapshot of one corrective-vs-baseline run over the golden set (ADR-0008).
+
+    The HEADLINE is the pre-registered PRIMARY ``activation_rate`` — the fraction of queries where
+    the corrective RETRY LOOP fired (a rewrite or a regeneration) — reported with its
+    rewrite/regenerate/effective splits and the ``terminated_reason`` histogram. It is judge-free
+    and byte-stable under fakes; on this corpus the honest expectation is ~0. ``activation_rate``
+    alone does NOT prove a no-op, because the grade node can still filter the context set with the
+    retry loop idle: ``contexts_identical_rate`` (also judge-free) reports the fraction of queries
+    where both arms generated over the EXACT same final contexts. A TRUE no-op requires
+    ``activation_rate == 0`` AND ``contexts_identical_rate == 1``; otherwise the honest framing is
+    "the retry loop never fired, but grading still filtered contexts on N queries — see the recall/
+    attribution/correctness deltas for the effect." Everything else is SECONDARY and directional:
+    the cost (mean ``extra_llm_calls``), the attribution regression guard (``corrective_micro_attr``
+    must NOT be below ``baseline_micro_attr``), recall-on-final-contexts per arm, and answer
+    correctness (LLM-judge rate + deterministic lexical-F1 floor). At ~0 activation any correctness
+    delta is generator+judge NOISE, never a win — this is stated in the rendered report.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    provenance: CorrectiveEvalProvenance
+    config: str
+    n_queries: int
+    # PRIMARY (pre-registered, confirmatory) — retry-loop activation rate.
+    activation_rate: Score
+    n_activated: int
+    n_rewrite_activated: int
+    n_regenerate_activated: int
+    n_final_query_changed: int
+    terminated_reason_counts: dict[str, int]
+    # PRIMARY (judge-free) — did grading change the context set even with the retry loop idle?
+    n_contexts_identical: int
+    contexts_identical_rate: Score
+    # SECONDARY (directional, expected ~0 delta) — cost, attribution, recall, correctness.
+    mean_extra_llm_calls: float
+    baseline_micro_attr: Score
+    corrective_micro_attr: Score
+    attr_delta: float
+    baseline_recall_mean: dict[int, Score]
+    corrective_recall_mean: dict[int, Score]
+    baseline_correctness_rate: Score
+    corrective_correctness_rate: Score
+    correctness_delta: float
+    baseline_lexical_f1_mean: Score
+    corrective_lexical_f1_mean: Score
+    n_judged: int
+    per_query: tuple[CorrectiveQueryRecord, ...]
+
+    @field_validator("baseline_recall_mean", "corrective_recall_mean")
+    @classmethod
+    def _sort_k_keys(cls, value: dict[int, Score]) -> dict[int, Score]:
+        """Insert k -> mean-recall pairs in ascending k order for a deterministic dump."""
+        return _sorted_by_key(value)

@@ -90,6 +90,19 @@ authors, `docs-historian` formats and cross-links).
   **measured** `VerificationReport` + a trace, never raising or looping. `langgraph>=0.2` is already a
   runtime dep (no pyproject change). Offline-fake tested; `agentic_enabled=False` by default; the
   API surface and a corrective-vs-baseline eval are deferred.
+- [ADR-0008](decisions/ADR-0008-corrective-vs-baseline-eval.md) — **Corrective-vs-baseline eval**
+  (offline-fake-first): a separate `make eval-corrective` entry point that runs the SAME golden set
+  through two arms differing only in agentic off (single pass) vs on (`run_corrective_rag`), over
+  ONE shared hermetic index / backends / generation LLM (reusing `prepare_hermetic_eval` +
+  `recall_at_k`/`ndcg_at_k` + the measured `attribution_rate`). **Primary metric = activation rate**
+  (does the loop fire? read trace-only from the frozen `CorrectiveRAGResult`: `n_rewrites` /
+  `n_regenerations` / `final_query != original_query`; judge-free, byte-stable, expected ~0/50 on
+  this saturated corpus). Secondary (all expected ≈ 0 delta, directional only): answer correctness
+  vs `reference_answer` (blind LLM-judge + deterministic lexical F1), attribution regression guard,
+  recall/nDCG on final contexts, and a trace-derived cost delta (`2*n_rewrites + n_regenerations +
+  1` extra LLM calls/query — +1 grade call even at zero activation). No CI, `single_run`,
+  `publishable` only when generation LLM + corrective LLM + judge + embedder + reranker are all
+  real. Adds no instrumentation to the agentic layer; `make eval` stays LLM-free.
 
 ### Retrieval & indexing (increments 1–2)
 

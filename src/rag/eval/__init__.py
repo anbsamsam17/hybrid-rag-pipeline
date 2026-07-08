@@ -1,10 +1,11 @@
 """Evaluation core + retrieval/attribution harnesses (ADR-0004/0005/0006).
 
 This package owns the repo's headline-credibility math. It exposes the **metrics + statistics
-core** (ADR-0004), the **retrieval evaluation harness** (ADR-0005), and the **attribution-rate
+core** (ADR-0004), the **retrieval evaluation harness** (ADR-0005), the **attribution-rate
 aggregation** (ADR-0006) that turns the measured per-answer ``attribution_rate`` into a
-golden-set aggregate. RAGAS faithfulness/answer-relevance still require an LLM judge and land in
-a later increment; they are intentionally absent here.
+golden-set aggregate, the **corrective-vs-baseline eval** (ADR-0008), and the **RAGAS-style
+generation-quality eval** (ADR-0009: faithfulness + answer_relevancy, reimplemented over the
+Anthropic SDK with RAGAS credited as the spec).
 
 Public surface:
 
@@ -21,6 +22,11 @@ Public surface:
 * Correctness judge (ADR-0008): :class:`~rag.eval.judge.AnswerCorrectnessJudge` Protocol +
   :class:`~rag.eval.judge.AnthropicAnswerCorrectnessJudge` /
   :class:`~rag.eval.judge.FakeAnswerCorrectnessJudge` + :func:`~rag.eval.judge.lexical_f1`.
+* Generation-quality scorers (ADR-0009): :class:`~rag.eval.generation_scorers.FaithfulnessScorer`
+  / :class:`~rag.eval.generation_scorers.AnswerRelevancyScorer` Protocols + their ``Anthropic*`` /
+  ``Fake*`` implementations, and the orchestrator
+  :func:`~rag.eval.generation_quality.run_generation_quality_eval`
+  (``python -m rag.eval.generation_quality``).
 * Frozen models: :class:`~rag.eval.models.GoldenItem`,
   :class:`~rag.eval.models.QueryMetrics`, :class:`~rag.eval.models.RetrievalMetrics`,
   :class:`~rag.eval.models.BootstrapResult`, :class:`~rag.eval.models.ConfigComparison`,
@@ -41,6 +47,18 @@ from __future__ import annotations
 from rag.eval.attribution import run_attribution_eval
 from rag.eval.bootstrap import paired_bootstrap_ci
 from rag.eval.corrective import answer_once, run_corrective_eval
+from rag.eval.generation_quality import run_generation_quality_eval
+from rag.eval.generation_scorers import (
+    AnswerRelevancyResult,
+    AnswerRelevancyScorer,
+    AnthropicAnswerRelevancyScorer,
+    AnthropicFaithfulnessScorer,
+    FaithfulnessResult,
+    FaithfulnessScorer,
+    FakeAnswerRelevancyScorer,
+    FakeFaithfulnessScorer,
+    StatementVerdict,
+)
 from rag.eval.golden import load_golden
 from rag.eval.harness import run_eval
 from rag.eval.judge import (
@@ -62,6 +80,9 @@ from rag.eval.models import (
     CorrectiveQueryRecord,
     EvalProvenance,
     EvalReport,
+    GenerationQualityProvenance,
+    GenerationQualityQueryRecord,
+    GenerationQualityReport,
     GoldenItem,
     QueryMetrics,
     RetrievalMetrics,
@@ -80,6 +101,7 @@ __all__ = [
     "run_eval",
     "run_attribution_eval",
     "run_corrective_eval",
+    "run_generation_quality_eval",
     "answer_once",
     # correctness judge (ADR-0008)
     "AnswerCorrectnessJudge",
@@ -87,6 +109,16 @@ __all__ = [
     "FakeAnswerCorrectnessJudge",
     "CorrectnessVerdict",
     "lexical_f1",
+    # generation-quality scorers (ADR-0009)
+    "FaithfulnessScorer",
+    "AnthropicFaithfulnessScorer",
+    "FakeFaithfulnessScorer",
+    "FaithfulnessResult",
+    "StatementVerdict",
+    "AnswerRelevancyScorer",
+    "AnthropicAnswerRelevancyScorer",
+    "FakeAnswerRelevancyScorer",
+    "AnswerRelevancyResult",
     # models
     "GoldenItem",
     "QueryMetrics",
@@ -101,4 +133,7 @@ __all__ = [
     "CorrectiveQueryRecord",
     "CorrectiveEvalProvenance",
     "CorrectiveEvalReport",
+    "GenerationQualityQueryRecord",
+    "GenerationQualityProvenance",
+    "GenerationQualityReport",
 ]

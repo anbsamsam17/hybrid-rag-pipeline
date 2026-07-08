@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     use_reranker: bool = True
     top_k_rerank: int = Field(default=5, gt=0)
 
+    # --- Generation-quality eval (RAGAS-style, ADR-0009) ---
+    # Number of candidate questions the answer-relevancy scorer generates per answer (RAGAS
+    # default = 3). Recorded in the generation-quality provenance for reproducibility.
+    ragas_answer_relevancy_n_questions: int = Field(default=3, gt=0)
+
     # --- Agentic (self-corrective RAG) ---
     # Optional LangGraph controller (ADR-0007): grade -> rewrite -> retry retrieval, and
     # verify -> regenerate -> retry generation, both under hard retry budgets. Off by default —

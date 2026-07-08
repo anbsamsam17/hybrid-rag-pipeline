@@ -1,6 +1,6 @@
 # Hybrid RAG pipeline — common tasks.
 # On Windows, run these in Git Bash (with `make`), or run the underlying command directly.
-.PHONY: help install up down ingest serve eval eval-attribution eval-corrective test lint fmt typecheck clean
+.PHONY: help install up down ingest serve eval eval-attribution eval-corrective eval-ragas test lint fmt typecheck clean
 
 help:
 	@echo "install    - editable install with dev extras"
@@ -10,6 +10,7 @@ help:
 	@echo "eval       - run the evaluation harness (comparison table + CI95)"
 	@echo "eval-attribution - aggregate the measured attribution_rate over the golden set (needs LLM)"
 	@echo "eval-corrective  - paired corrective-vs-baseline eval: activation rate + secondary deltas (needs LLM)"
+	@echo "eval-ragas       - RAGAS-style generation quality: faithfulness + answer_relevancy (needs LLM)"
 	@echo "test/lint/fmt/typecheck - quality gates"
 
 install:
@@ -40,6 +41,12 @@ eval-attribution:
 # (real LLM judge), attribution regression guard, recall, cost. single_run, no CI.
 eval-corrective:
 	python -m rag.eval.corrective
+
+# Also separate from `eval` (LLM-required, mirrors eval-attribution): the RAGAS-STYLE generation
+# quality metrics (faithfulness + answer_relevancy) reimplemented over the Anthropic SDK. RAGAS is
+# credited as the spec, NOT run as a library. single_run, no CI; publishable only when fully real.
+eval-ragas:
+	python -m rag.eval.generation_quality
 
 test:
 	pytest

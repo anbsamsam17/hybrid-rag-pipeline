@@ -36,7 +36,11 @@ dependencies = [
   "uvicorn[standard]>=0.30",
   "sse-starlette>=2.1",
   # Evaluation / stats
-  "ragas>=0.2",
+  # NOTE: `ragas` is intentionally NOT a dependency (ADR-0009): its LangChain LLM wrapper sets
+  # `temperature` and offers no adaptive-thinking/effort surface, violating this repo's binding
+  # Anthropic SDK rules (all banned params 400 on the 4.x models). Faithfulness + answer_relevancy
+  # are reimplemented over the official `anthropic` SDK in `rag.eval.generation_scorers`, RAGAS
+  # credited as the spec. Carrying the unused dep would be an overclaim.
   "numpy>=1.26",
   "scipy>=1.13",
   # Document loading / chunking

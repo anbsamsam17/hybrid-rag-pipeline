@@ -16,7 +16,7 @@
 Most RAG demos stop at `embeddings → top-k → LLM` over a single PDF. That proves nothing about retrieval quality. This project is built around the questions that actually matter in production:
 
 - **Is the retrieval any good?** Measured rigorously with `recall@k`, `nDCG@k`, `MRR` on a labeled evaluation set, comparing **dense-only vs. sparse-only vs. hybrid vs. hybrid+rerank**. The comparison table includes paired bootstrap **CI95** to distinguish real wins from noise. The harness itself is hermetic (eval-scoped index, never touches production), anti-leakage (golden set validation, corpus freshness guards), reproducible (bit-exact, byte-diffable JSON artifact), and fully offline-testable.
-- **Are the answers grounded?** Every generated claim is checked against its cited source span; the pipeline reports a measured **citation attribution rate** (not assumed). _(Coming: RAGAS faithfulness/answer-relevance metrics.)_
+- **Are the answers grounded?** Every generated claim is checked against its cited source span; the pipeline reports a measured **citation attribution rate** (not assumed). RAGAS-style generation metrics (**faithfulness**, **answer-relevancy**; reimplemented over the Anthropic SDK) are also implemented; numbers pending a real `make eval-ragas` run.
 - **Does it hold up as a system?** Async API, containerized vector store, observability (latency p95, cost/request), CI, and architecture decision records capturing the key tradeoffs.
 
 The differentiator is not the stack — it is the **evaluation rigor** and the **verified citations**.
@@ -186,7 +186,7 @@ An optional **self-corrective RAG** layer ([ADR-0007](docs/decisions/ADR-0007-se
 - [x] FastAPI service with streaming + observability
 - [x] Docker Compose + GitHub Actions CI (ruff · black · mypy · pytest) + tests
 - [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; published in [`README.md § Attribution rate (measured)`](#attribution-rate-measured)
-- [ ] _(increment 3b)_ RAGAS faithfulness + answer-relevance
+- [x] _(increment 3b)_ **RAGAS-style generation metrics** (faithfulness + answer-relevancy; reimplemented over the Anthropic SDK) — `make eval-ragas` entry point, offline-fake-tested, numbers pending a real run
 - [x] _(increment 4)_ **Self-corrective RAG** (LangGraph `StateGraph` over the existing pipeline; opt-in via `agentic_enabled=False`; two bounded feedback loops: grade+rewrite retrieval, verify+regenerate generation; provably terminates via recursion limit; offline-testable with deterministic fakes; evaluation deferred)
 
 ## Development

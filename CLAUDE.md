@@ -17,9 +17,10 @@ things most RAG demos skip:
 - **Verified citations** — every generated claim is checked against its cited source
   span (lexical overlap + NLI/LLM-judge); the pipeline reports a **measured
   `attribution_rate`**, never a declared one.
-- **Rigorous retrieval evaluation** — `recall@k`, `nDCG@k`, `MRR`, RAGAS
-  faithfulness/answer-relevance, plus a custom `attribution_rate`, comparing
-  **dense-only vs sparse-only vs hybrid vs hybrid+rerank** with **bootstrap CI95**.
+- **Rigorous retrieval evaluation** — `recall@k`, `nDCG@k`, `MRR`, RAGAS-style metrics
+  (faithfulness/answer-relevancy, reimplemented over the Anthropic SDK), plus a custom
+  `attribution_rate`, comparing **dense-only vs sparse-only vs hybrid vs hybrid+rerank**
+  with **bootstrap CI95**.
 - **Optional self-corrective RAG** — a LangGraph `StateGraph`:
   `analyze → retrieve → grade docs → (low relevance) rewrite query & retry → generate → verify → regenerate`.
 
@@ -37,7 +38,7 @@ things this codebase exists to get right.
   **`bge-reranker`** cross-encoder.
 - **Anthropic / OpenAI** LLMs; **Pydantic** structured outputs.
 - **FastAPI** (async, SSE streaming).
-- **RAGAS** + custom metrics for eval; **SQLite** for logs/eval results.
+- RAGAS-style metrics (faithfulness/answer-relevancy, reimplemented) + custom metrics for eval; **SQLite** for logs/eval results.
 - **ruff + black** (lint/format), **pytest** (tests), **Docker Compose**, **GitHub Actions** CI.
 
 ### LLM / Anthropic SDK rules (load-bearing)
@@ -71,7 +72,8 @@ Corpus ─▶ src/rag/ingestion/    loaders, chunkers (fixed / recursive / seman
        ─▶ src/rag/verification/ attribution checker (claim ↔ source span)
        ─▶ src/rag/agentic/      corrective_rag.py — LangGraph StateGraph (optional)
        ─▶ src/rag/api/          FastAPI: /ingest /query /eval, SSE, observability
-       ─▶ src/rag/eval/         recall@k · nDCG@k · MRR · RAGAS · attribution_rate · bootstrap CI95
+       ─▶ src/rag/eval/         recall@k · nDCG@k · MRR · faithfulness · answer-relevancy ·
+                                 attribution_rate · bootstrap CI95
 
 src/rag/config.py               Pydantic settings (single source of config truth)
 datasets/golden.jsonl           labeled golden set — PROTECTED, never agent-mutated

@@ -447,3 +447,137 @@ class CorrectiveEvalReport(BaseModel):
     def _sort_k_keys(cls, value: dict[int, Score]) -> dict[int, Score]:
         """Insert k -> mean-recall pairs in ascending k order for a deterministic dump."""
         return _sorted_by_key(value)
+
+
+# --- RAGAS-style generation quality (ADR-0009) -------------------------------------------------
+# The typed contract for the golden-set aggregate of the two RAGAS-style generation-quality
+# metrics reimplemented over the Anthropic SDK (RAGAS credited as the SPEC; these are NOT the
+# canonical RAGAS library's output). Like Attribution*/Corrective*, this is a SINGLE-config LLM
+# measurement with no bootstrap CI (statement-decomposition / NLI / question-generation are
+# non-reproducible), so ``single_run=True`` and ``publishable`` gates on ALL real backends
+# INCLUDING both scorers. faithfulness (all-claim grounding vs the full retrieved context) and
+# answer_relevancy (does the answer address the question) measure DISTINCT things from each other
+# and from ``attribution_rate`` (grounding of the citations the model MADE) — they are never
+# summed or presented as one improving the other.
+#
+# ``Relevancy`` is deliberately NOT the ``Score`` [0, 1] type: cosine of embedded questions is
+# theoretically in ``[-1, 1]``, and clamping a genuinely divergent answer to 0 would hide signal
+# (ADR-0009 decision f). The noncommittal gate still forces an evasive answer to EXACTLY 0.0.
+Relevancy = Annotated[float, Field(ge=-1.0, le=1.0)]
+
+
+class GenerationQualityQueryRecord(BaseModel):
+    """One golden query's generation-quality outcome (the per-query distribution the report shows).
+
+    Carries both scored blocks for the SAME generated answer over the SAME retrieved contexts.
+    ``n_statements`` is recorded per query so a suspicious ``n_statements == 1`` (a
+    one-giant-statement decomposition that can mask unsupported sub-claims) is visible in the
+    artifact rather than hidden inside a saturated aggregate. ``faith_abstained`` is exactly
+    ``n_statements == 0`` (the answer made no factual claims to ground — EXCLUDED from the micro
+    pool). ``noncommittal`` marks a refusal/evasive answer whose ``relevancy`` is forced to exactly
+    ``0.0`` and which is INCLUDED as 0 in the answer-relevancy headline (evasiveness SHOULD score
+    low). The two abstention conventions are deliberately asymmetric (ADR-0009 decision d).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    query_id: str
+    # Faithfulness block (all-claim grounding vs the full retrieved context; LLM NLI).
+    n_statements: int = Field(ge=0)
+    n_supported: int = Field(ge=0)
+    faithfulness: Score
+    faith_abstained: bool
+    # Answer-relevancy block (does the answer address the question; embedding cosine over
+    # LLM-generated questions; needs NO ground truth).
+    relevancy: Relevancy
+    noncommittal: bool
+    n_generated_questions: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def _supported_within_statements(self) -> GenerationQualityQueryRecord:
+        """``n_supported`` can never exceed ``n_statements`` (a numerator > denominator bug)."""
+        if self.n_supported > self.n_statements:
+            raise ValueError(
+                f"n_supported ({self.n_supported}) exceeds n_statements ({self.n_statements})"
+            )
+        return self
+
+
+class GenerationQualityProvenance(BaseModel):
+    """Reproducibility + publishability header for one generation-quality run (ADR-0009).
+
+    Records the generator identity (``llm_class`` / ``llm_model``), BOTH scorer classes plus the
+    resolved ``scorer_model`` (a model DIFFERENT from the generator by default, to blunt
+    self-preference on the faithfulness NLI), the embedder identity used for answer-relevancy
+    cosine (``embedder_class`` / ``embedding_model``), the reranker, the answering cutoff
+    ``top_k_rerank``, and the answer-relevancy question count. ``publishable`` is ``True`` ONLY when
+    the generator, BOTH scorers, the embedder, AND the reranker are all the real classes — any fake
+    flips it ``False``. ``single_run`` records the no-CI discipline: decomposition / NLI /
+    question-generation are non-reproducible, so an intra-run bootstrap would be false precision.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    llm_class: str
+    llm_model: str
+    faithfulness_scorer_class: str
+    answer_relevancy_scorer_class: str
+    scorer_model: str
+    embedder_class: str
+    embedding_model: str
+    reranker_class: str
+    top_k_rerank: int
+    n_answer_relevancy_questions: int
+    git_sha: str | None
+    corpus_sha256: str
+    corpus_dir: str
+    library_versions: dict[str, str | None]
+    n_queries: int
+    single_run: bool = True
+    publishable: bool
+
+
+class GenerationQualityReport(BaseModel):
+    """Immutable snapshot of one RAGAS-style generation-quality run over the golden set (ADR-0009).
+
+    Faithfulness HEADLINE is ``micro_faithfulness`` — pooled ``total_supported /
+    total_statements`` — immune to the 0-statement convention (a 0-statement answer contributes
+    nothing to either pool). ``macro_faithfulness`` (mean of per-query faithfulness, abstentions
+    counted 0.0), ``macro_faithfulness_answered`` (macro over answered queries only), and
+    ``n_faith_abstained`` are SECONDARY and always reported so abstention is visible; macro is never
+    reported alone. Answer-relevancy HEADLINE is ``macro_answer_relevancy`` — the mean over ALL
+    queries with noncommittal answers included as 0 — reported with ``committal_answer_relevancy``
+    (committal-only mean) and ``n_noncommittal`` alongside. These are RAGAS-STYLE reimplementations
+    (RAGAS credited as spec), NOT canonical RAGAS-library output, and near-ceiling faithfulness on
+    an easy corpus is a regime property, NOT a differentiator win.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    provenance: GenerationQualityProvenance
+    config: str
+    n_queries: int
+    # Faithfulness block.
+    total_statements: int
+    total_supported: int
+    micro_faithfulness: Score
+    macro_faithfulness: Score
+    macro_faithfulness_answered: Score
+    n_faith_answered: int
+    n_faith_abstained: int
+    # Answer-relevancy block.
+    macro_answer_relevancy: Relevancy
+    committal_answer_relevancy: Relevancy
+    n_noncommittal: int
+    n_committal: int
+    per_query: tuple[GenerationQualityQueryRecord, ...]
+
+    @model_validator(mode="after")
+    def _supported_within_statements(self) -> GenerationQualityReport:
+        """Pooled ``total_supported`` can never exceed pooled ``total_statements``."""
+        if self.total_supported > self.total_statements:
+            raise ValueError(
+                f"total_supported ({self.total_supported}) exceeds total_statements "
+                f"({self.total_statements})"
+            )
+        return self

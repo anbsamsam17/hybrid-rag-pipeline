@@ -40,8 +40,15 @@ Corpus ─▶ ingestion/    loaders (PDF/DOCX/MD/HTML) → chunking (fixed | rec
                             publishable only when LLM+embedder+reranker are all real. Offline-fake
                             tested (byte-stable). Runs via `make eval-attribution` →
                             `python -m rag.eval.attribution` (LLM-required; NOT part of `make eval`).
-                        [RAGAS faithfulness/answer-relevance forthcoming — later increment,
-                         requires LLM judge]
+                          · generation_quality.py + generation_scorers.py — RAGAS-style generation
+                            metrics (faithfulness + answer-relevancy; reimplementation over the
+                            Anthropic SDK, credited as the spec; ADR-0009): faithfulness decompose
+                            answer → NLI-verify each statement against FULL retrieved context, micro
+                            (pooled) headline + macro + abstention split; answer-relevancy LLM-generate
+                            questions from answer → cosine similarity vs original query, macro mean with
+                            noncommittal forcing. Offline-fake-tested (byte-stable fakes), no CI (LLM
+                            non-reproducible), publishable only when scorers + generator are real.
+                            Runs via `make eval-ragas` (LLM-required; NOT part of `make eval`).
 ```
 
 Configuration is centralized in `src/rag/config.py` (`Settings`). Each `src/rag/<module>`
@@ -103,6 +110,16 @@ authors, `docs-historian` formats and cross-links).
   1` extra LLM calls/query — +1 grade call even at zero activation). No CI, `single_run`,
   `publishable` only when generation LLM + corrective LLM + judge + embedder + reranker are all
   real. Adds no instrumentation to the agentic layer; `make eval` stays LLM-free.
+
+### Generation quality (increment 3b)
+
+- [ADR-0009](decisions/ADR-0009-ragas-generation-metrics.md) — **RAGAS-style generation metrics**
+  (faithfulness + answer-relevancy, reimplemented over the Anthropic SDK, credited as the spec):
+  two scorers decomposing and verifying answer statements via NLI against the full retrieved context
+  (faithfulness), and LLM-generating candidate questions from the answer to measure semantic coverage
+  (answer-relevancy) via embedding cosine. Offline-fake-first, no CI (LLM non-reproducible), `make
+  eval-ragas` entry point, publishable only when scorers and generator are real. Complements (never
+  double-counts with) the measured `attribution_rate`.
 
 ### Retrieval & indexing (increments 1–2)
 

@@ -16,7 +16,7 @@
 Most RAG demos stop at `embeddings → top-k → LLM` over a single PDF. That proves nothing about retrieval quality. This project is built around the questions that actually matter in production:
 
 - **Is the retrieval any good?** Measured rigorously with `recall@k`, `nDCG@k`, `MRR` on a labeled evaluation set, comparing **dense-only vs. sparse-only vs. hybrid vs. hybrid+rerank**. The comparison table includes paired bootstrap **CI95** to distinguish real wins from noise. The harness itself is hermetic (eval-scoped index, never touches production), anti-leakage (golden set validation, corpus freshness guards), reproducible (bit-exact, byte-diffable JSON artifact), and fully offline-testable.
-- **Are the answers grounded?** Every generated claim is checked against its cited source span; the pipeline reports a measured **citation attribution rate** (not assumed). RAGAS-style generation metrics (**faithfulness**, **answer-relevancy**; reimplemented over the Anthropic SDK) are also implemented; numbers pending a real `make eval-ragas` run.
+- **Are the answers grounded?** Every generated claim is checked against its cited source span; the pipeline reports a measured **citation attribution rate** (not assumed). RAGAS-style generation metrics (**faithfulness**, **answer-relevancy**; reimplemented over the Anthropic SDK) are also **measured** — faithfulness micro = 0.981, answer-relevancy macro = 0.828 over n=50 (see [Generation quality](#generation-quality--ragas-style-measured)).
 - **Does it hold up as a system?** Async API, containerized vector store, observability (latency p95, cost/request), CI, and architecture decision records capturing the key tradeoffs.
 
 The differentiator is not the stack — it is the **evaluation rigor** and the **verified citations**.
@@ -74,6 +74,38 @@ Verification is lexical (normalized substring / hardened token-overlap vs. the c
 - Reranker: BAAI/bge-reranker-base (top_k=5)
 - LLM: Claude Sonnet 4.6 (verification)
 - Reproducible via: `make eval-attribution` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
+
+### Generation quality — RAGAS-style (measured)
+
+**RAGAS-style** faithfulness + answer-relevancy, **reimplemented over the Anthropic SDK** (RAGAS credited as the spec — *not* the canonical RAGAS library's output; see [ADR-0009](docs/decisions/ADR-0009-ragas-generation-metrics.md)). Scored on the same generated answers over the same **hybrid+rerank** retrieval (top_k_rerank=5), n=50.
+
+**Faithfulness** (are *all* the answer's atomic statements grounded in the *full* retrieved context; LLM decompose + NLI):
+- **micro (pooled) faithfulness = 0.981** (210/214 supported statements) — the headline
+- Macro faithfulness: 0.986 · Macro over answered: 0.986 (n_answered=50) · Abstentions: 0/50
+- **Not saturated at 1.000 — and that is the point.** The NLI flagged 4 unsupported statements across 2 queries (q08: 5/7, q48: 3/5), so the scorer is demonstrably *discriminating*, not rubber-stamping. A perfect 1.000 would be indistinguishable from an always-"supported" bug (which the mandatory fabricated-claim test fixture guards against).
+
+**Answer-relevancy** (does the answer address the *question*; embedding cosine over LLM-generated questions; needs no ground truth):
+- **macro answer-relevancy = 0.828** (mean over all queries; a noncommittal answer would count as 0) — the headline
+- Committal-only mean: 0.828 · Noncommittal: 0/50 · Per-query range: 0.661 (q04) – 0.958 (q29)
+
+**Mandatory caveats:**
+
+RAGAS-**style**: a faithful reimplementation of the published RAGAS algorithms over the Anthropic SDK, never the canonical `ragas` library's output. Numbers are labeled "RAGAS-style" wherever they surface.
+
+Single run, no CI — decomposition / NLI / question-generation are not bit-exact reproducible; point estimates only.
+
+Easy-corpus regime (12 docs / 39 chunks, single-fact on-topic queries, top-5 grounded contexts): near-ceiling faithfulness is a **regime property, directional — not a differentiator win**. Answer-relevancy below 1.0 is expected (short factual answers; generated questions are close but embedding cosine is not exactly 1).
+
+Three distinct metrics, three distinct denominators, **never summed and never one "improving" another**: attribution_rate (are the *cited* spans honest? — denominator = citations) · faithfulness (is *every* statement grounded, cited or not? — denominator = statements) · answer-relevancy (is the answer on-topic? — no ground truth).
+
+**Provenance (distinct from the retrieval / attribution / corrective blocks):**
+- git commit: 3e9b399 (main, the increment-3b merge)
+- corpus SHA-256: beb2701a
+- Generator LLM: Claude Sonnet 4.6
+- Scorer LLM (faithfulness NLI + answer-relevancy question-gen): Claude Opus 4.8 (distinct from generator → no self-preference)
+- Answer-relevancy embedder: BAAI/bge-small-en-v1.5 · Reranker: BAAI/bge-reranker-base (top_k=5) · N_questions=3
+- n=50, single_run=true, no CI (LLM non-reproducible)
+- Reproducible via: `make eval-ragas` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
 
 ### Corrective RAG vs. baseline (measured)
 
@@ -186,7 +218,7 @@ An optional **self-corrective RAG** layer ([ADR-0007](docs/decisions/ADR-0007-se
 - [x] FastAPI service with streaming + observability
 - [x] Docker Compose + GitHub Actions CI (ruff · black · mypy · pytest) + tests
 - [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; published in [`README.md § Attribution rate (measured)`](#attribution-rate-measured)
-- [x] _(increment 3b)_ **RAGAS-style generation metrics** (faithfulness + answer-relevancy; reimplemented over the Anthropic SDK) — `make eval-ragas` entry point, offline-fake-tested, numbers pending a real run
+- [x] _(increment 3b)_ **RAGAS-style generation metrics** (faithfulness + answer-relevancy; reimplemented over the Anthropic SDK) — `make eval-ragas` entry point, offline-fake-tested, **measured & published** (faithfulness micro=0.981, answer-relevancy macro=0.828, n=50; see [§ Generation quality](#generation-quality--ragas-style-measured))
 - [x] _(increment 4)_ **Self-corrective RAG** (LangGraph `StateGraph` over the existing pipeline; opt-in via `agentic_enabled=False`; two bounded feedback loops: grade+rewrite retrieval, verify+regenerate generation; provably terminates via recursion limit; offline-testable with deterministic fakes; evaluation deferred)
 
 ## Development

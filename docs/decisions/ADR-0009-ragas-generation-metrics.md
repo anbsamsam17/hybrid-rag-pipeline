@@ -272,17 +272,26 @@ Negative / accepted:
 
 ## Measured numbers
 
-**Intentionally left blank.** Per the headline-metric rule, no faithfulness / answer-relevancy
-numbers are recorded here or anywhere in `docs/` / README until the **first reproducible
-`make eval-ragas` run** with the real `AnthropicLLMClient` generator + real
-`AnthropicFaithfulnessScorer` / `AnthropicAnswerRelevancyScorer` + bge-small embedder +
-cross-encoder reranker has produced them; `docs-historian` then publishes them from that run, never
-invented or hand-edited. The pre-registered **prediction** (not a published metric) on this easy
-corpus is faithfulness **near-ceiling** (directional, regime-bound — not a differentiator win) and
-answer-relevancy **high but below `1.0`** (short factual answers; generated questions are close but
-embedding cosine is not exactly `1`). The offline test path asserts structure, invariants,
-determinism, abstention/noncommittal accounting, and that a fabricated-claim fixture drops
-faithfulness below `1.0` — never a real LLM value.
+First reproducible `make eval-ragas` run (`publishable=true`), published in
+[`README.md § Generation quality — RAGAS-style (measured)`](../../README.md#generation-quality--ragas-style-measured).
+All backends real: `AnthropicLLMClient` generator (`claude-sonnet-4-6`) + real
+`AnthropicFaithfulnessScorer` / `AnthropicAnswerRelevancyScorer` (`claude-opus-4-8`, distinct from
+the generator) + bge-small embedder + cross-encoder reranker; hybrid+rerank, top_k_rerank=5, N=3,
+n=50, git_sha `3e9b399`, corpus_sha256 `beb2701a`, `single_run=true` (no CI).
+
+- **faithfulness — micro (headline) = 0.981** (210/214 pooled supported statements); macro 0.986;
+  macro over answered 0.986 (n_answered=50); 0/50 abstentions.
+- **answer-relevancy — macro (headline) = 0.828** (mean over all queries); committal-only 0.828;
+  0/50 noncommittal; per-query range 0.661–0.958.
+
+The pre-registered prediction held: faithfulness near-ceiling (regime-bound, **directional — not a
+differentiator win**) and answer-relevancy high but below `1.0`. Crucially, faithfulness did **not**
+saturate at `1.000`: the NLI flagged 4 unsupported statements across 2 queries (q08 5/7, q48 3/5),
+live evidence the scorer discriminates rather than always answering "supported" — the exact failure
+the mandatory fabricated-claim fixture guards against. Numbers are **RAGAS-style** (reimplementation),
+never presented as the canonical `ragas` library's output, and are never summed with — nor claimed to
+improve — the measured `attribution_rate`. Republish only from a fresh reproducible run (`single_run`
+point estimates drift run-to-run, exactly the no-CI caveat), never hand-edited.
 
 ## Cross-links
 

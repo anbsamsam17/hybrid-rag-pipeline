@@ -9,6 +9,19 @@
 
 > ✅ **Status: complete.** Every [roadmap](#roadmap) item is implemented, tested (370 offline tests, CI green), and measured. Every number in this README is reproducible from the eval harness (`make eval` and its LLM-backed siblings) — nothing is declared without a measurement behind it.
 
+## Results at a glance
+
+| | Measured | The honest fine print |
+|---|---|---|
+| **Retrieval** — hybrid+rerank, best of 4 configs | nDCG@10 **0.983** · MRR 0.977 · R@1 0.950 | deltas vs. baselines are directional, **not significant at n=50** (paired bootstrap CI95) |
+| **Citation attribution** | **1.000** micro (55/55 citations grounded) | grounding ≠ correctness; lexical span check; single run, no CI |
+| **Faithfulness** — RAGAS-style, reimplemented over the Anthropic SDK | **0.981** micro (210/214 statements) | the NLI judge rejected 4 statements — it discriminates rather than rubber-stamps |
+| **Answer relevancy** — RAGAS-style | **0.828** macro | needs no ground truth; single run, no CI |
+| **Self-corrective RAG** — LangGraph, A/B vs. baseline | activation **0/50** → +1 LLM call/query for no gain | a negative result, published as-is; the loop targets harder corpora |
+| **Engineering** | **370 offline tests** · CI · bit-exact reproducible builds | tests need no API key, no GPU, no network |
+
+Every row comes from a reproducible harness run with full provenance (git SHA, corpus SHA-256, pinned seeds). The [detailed sections](#evaluation-results) below carry the complete tables and mandatory caveats.
+
 ---
 
 ## Why this project
@@ -20,6 +33,25 @@ Most RAG demos stop at `embeddings → top-k → LLM` over a single PDF. That pr
 - **Does it hold up as a system?** Async API (SSE streaming), containerized vector store, structured request-id + per-request latency logging, CI, and architecture decision records capturing the key tradeoffs.
 
 The differentiator is not the stack — it is the **evaluation rigor** and the **verified citations**.
+
+## Quickstart
+
+```bash
+git clone https://github.com/anbsamsam17/hybrid-rag-pipeline && cd hybrid-rag-pipeline
+make install                        # pip install -e ".[dev]" + pre-commit hooks
+make test                           # 370 tests — fully offline: no API key, no GPU, no network
+
+# Reproduce the published retrieval table (downloads 2 small local models; still no API key):
+QDRANT_PATH=./storage/qdrant make eval
+
+# Serve the API over the shipped demo corpus:
+cp .env.example .env                # set ANTHROPIC_API_KEY (needed for /query generation only)
+make up                             # start Qdrant via Docker Compose (or keep QDRANT_PATH for embedded mode)
+CORPUS_DIR=data/sample make ingest  # index the public demo corpus (point CORPUS_DIR at your own docs later)
+make serve                          # http://localhost:8000/docs — POST /query, SSE /query/stream
+```
+
+`make eval-attribution`, `make eval-ragas` and `make eval-corrective` reproduce the LLM-backed metrics; they need `ANTHROPIC_API_KEY` and are deliberately kept out of `make eval` so the core table stays key-free. (And if your corpus dir ever points at the eval corpus, the harness refuses to run — the anti-leakage guard raises instead of silently inflating the numbers.)
 
 ## Evaluation results
 
@@ -166,17 +198,22 @@ The harness builds an evaluation-scoped index (never touches production), runs t
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    C["Corpus"] --> I["Ingestion<br/>loaders · 3 chunking strategies"]
+    I --> D[("Qdrant<br/>dense")]
+    I --> S[("BM25<br/>sparse")]
+    D --> F["RRF fusion<br/>hand-written, k=60"]
+    S --> F
+    F --> R["Cross-encoder<br/>rerank"]
+    R --> G["Generation<br/>citation-enforced (Pydantic)"]
+    G --> V["Verification<br/>claim ↔ cited span"]
+    V --> M["measured<br/>attribution_rate"]
+    R -. "low relevance → rewrite query, retry" .-> F
+    V -. "ungrounded → regenerate" .-> G
 ```
-Corpus ─▶ Ingestion (loaders, chunking strategies)
-       ─▶ Indexing  (dense embeddings → Qdrant │ sparse → BM25)
-       ─▶ Retrieval (dense ┐
-                      sparse ┼─▶ RRF fusion ─▶ cross-encoder rerank)
-       ─▶ Generation (citation-enforced prompt → structured output)
-       ─▶ Verification (each citation ↔ source span)
-       ─▶ (Optional) Self-corrective RAG: grade docs → rewrite query → retry retrieval;
-                     verify answer → regenerate on low grounding
-       ─▶ Eval harness (recall@k · nDCG@k · MRR · faithfulness · attribution)
-```
+
+Dotted edges are the **optional, bounded LangGraph self-corrective loops** (`agentic_enabled=False` by default). A hermetic **eval harness** — never touching the production index — scores four configurations (dense-only · sparse-only · hybrid · hybrid+rerank) with recall@k / nDCG@k / MRR and paired bootstrap CI95, plus the LLM-backed attribution and RAGAS-style metrics. Full module map in [`docs/architecture.md`](docs/architecture.md).
 
 ### Self-corrective RAG (optional, opt-in)
 

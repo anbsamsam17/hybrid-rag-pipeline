@@ -199,16 +199,15 @@ The harness builds an evaluation-scoped index (never touches production), runs t
 ## Architecture
 
 ```mermaid
-flowchart LR
-    C["Corpus"] --> I["Ingestion<br/>loaders · 3 chunking strategies"]
-    I --> D[("Qdrant<br/>dense")]
-    I --> S[("BM25<br/>sparse")]
-    D --> F["RRF fusion<br/>hand-written, k=60"]
+flowchart TD
+    C["Corpus"] --> I["Ingestion — loaders · 3 chunking strategies"]
+    I --> D[("Qdrant — dense")]
+    I --> S[("BM25 — sparse")]
+    D --> F["RRF fusion — hand-written, k=60"]
     S --> F
-    F --> R["Cross-encoder<br/>rerank"]
-    R --> G["Generation<br/>citation-enforced (Pydantic)"]
-    G --> V["Verification<br/>claim ↔ cited span"]
-    V --> M["measured<br/>attribution_rate"]
+    F --> R["Cross-encoder rerank — bge-reranker-base"]
+    R --> G["Generation — citation-enforced, structured output (Pydantic)"]
+    G --> V["Verification — each claim ↔ its cited span → measured attribution_rate"]
     R -. "low relevance → rewrite query, retry" .-> F
     V -. "ungrounded → regenerate" .-> G
 ```

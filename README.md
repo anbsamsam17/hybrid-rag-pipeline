@@ -2,12 +2,12 @@
 
 > Production-grade Retrieval-Augmented Generation with **hybrid retrieval** (dense + sparse), **Reciprocal Rank Fusion**, **verified citations**, and a **rigorous retrieval evaluation harness**.
 
-[![CI](https://img.shields.io/badge/CI-pending-lightgrey)](#)
+[![CI](https://github.com/anbsamsam17/hybrid-rag-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/anbsamsam17/hybrid-rag-pipeline/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Status](https://img.shields.io/badge/status-in%20development-orange)](#roadmap)
+[![Status](https://img.shields.io/badge/status-complete-brightgreen)](#roadmap)
 
-> 🚧 **Status: in active development.** This README describes the target design. Sections marked _(planned)_ are not implemented yet; the [roadmap](#roadmap) tracks progress. No benchmark numbers are published until they are reproducible via `make eval`.
+> ✅ **Status: complete.** Every [roadmap](#roadmap) item is implemented, tested (370 offline tests, CI green), and measured. Every number in this README is reproducible from the eval harness (`make eval` and its LLM-backed siblings) — nothing is declared without a measurement behind it.
 
 ---
 
@@ -17,7 +17,7 @@ Most RAG demos stop at `embeddings → top-k → LLM` over a single PDF. That pr
 
 - **Is the retrieval any good?** Measured rigorously with `recall@k`, `nDCG@k`, `MRR` on a labeled evaluation set, comparing **dense-only vs. sparse-only vs. hybrid vs. hybrid+rerank**. The comparison table includes paired bootstrap **CI95** to distinguish real wins from noise. The harness itself is hermetic (eval-scoped index, never touches production), anti-leakage (golden set validation, corpus freshness guards), reproducible (bit-exact, byte-diffable JSON artifact), and fully offline-testable.
 - **Are the answers grounded?** Every generated claim is checked against its cited source span; the pipeline reports a measured **citation attribution rate** (not assumed). RAGAS-style generation metrics (**faithfulness**, **answer-relevancy**; reimplemented over the Anthropic SDK) are also **measured** — faithfulness micro = 0.981, answer-relevancy macro = 0.828 over n=50 (see [Generation quality](#generation-quality--ragas-style-measured)).
-- **Does it hold up as a system?** Async API, containerized vector store, observability (latency p95, cost/request), CI, and architecture decision records capturing the key tradeoffs.
+- **Does it hold up as a system?** Async API (SSE streaming), containerized vector store, structured request-id + per-request latency logging, CI, and architecture decision records capturing the key tradeoffs.
 
 The differentiator is not the stack — it is the **evaluation rigor** and the **verified citations**.
 
@@ -164,7 +164,7 @@ The harness builds an evaluation-scoped index (never touches production), runs t
 
 ---
 
-## Architecture (target)
+## Architecture
 
 ```
 Corpus ─▶ Ingestion (loaders, chunking strategies)
@@ -191,20 +191,21 @@ An optional **self-corrective RAG** layer ([ADR-0007](docs/decisions/ADR-0007-se
 - **Degrades gracefully.** On budget exhaustion, returns the best-effort answer with its **measured** `VerificationReport` and a trace; never raises or loops.
 - **Pure composition.** Reuses existing `HybridRetriever.retrieve()`, `generate_answer()`, and `verify_answer()` verbatim; no fusion/rerank/attribution logic is duplicated.
 
-**Evaluation status:** _(intentionally not yet measured)_ — no corrective-vs-baseline numbers are published. The impact of query rewriting on retrieval recall and of regeneration on grounding rate are the key signals. When measured, they will be reported via a paired bootstrap comparison over the golden set alongside n_rewrites and n_regenerations costs, with a regression guard (must not reduce attribution below baseline).
+**Evaluation status:** measured — see [Corrective RAG vs. baseline (measured)](#corrective-rag-vs-baseline-measured) above ([ADR-0008](docs/decisions/ADR-0008-corrective-vs-baseline-eval.md)). Verdict on this corpus: the retry loop never fires (activation 0/50), grading still filters contexts on every query, and the net effect is +1 LLM call/query for no measurable gain — published honestly rather than claimed as a win.
 
 ## Tech stack
 
 | Layer | Choice |
 |-------|--------|
 | Orchestration | LangChain (+ LangGraph for the agentic layer) |
-| Embeddings | OpenAI `text-embedding-3-small` / `BAAI/bge-small-en-v1.5` (local) |
-| Vector store | Qdrant |
-| Sparse retrieval | BM25 (`rank_bm25`) with hand-implemented RRF |
+| Embeddings | `BAAI/bge-small-en-v1.5` (local SentenceTransformer; deterministic hashing embedder for offline tests) |
+| Vector store | Qdrant (server / on-disk / in-memory modes) |
+| Sparse retrieval | BM25 (`rank_bm25`) with hand-implemented RRF (k=60) |
 | Reranker | `BAAI/bge-reranker-base` (cross-encoder) |
-| Generation | GPT-4o / Claude Sonnet, structured output via Pydantic |
+| Generation | Claude Sonnet 4.6 via the Anthropic SDK (adaptive thinking, structured output via Pydantic) |
+| LLM scorers / judge | Claude Opus 4.8 (distinct from the generator — no self-preference) |
 | API | FastAPI (async, SSE streaming) |
-| Evaluation | custom retrieval-metrics harness + RAGAS |
+| Evaluation | custom retrieval-metrics harness (recall@k · nDCG@k · MRR + paired bootstrap CI95) + RAGAS-style faithfulness/answer-relevancy reimplemented over the Anthropic SDK |
 | Infra | Docker Compose, GitHub Actions CI |
 
 ## Roadmap
@@ -219,7 +220,8 @@ An optional **self-corrective RAG** layer ([ADR-0007](docs/decisions/ADR-0007-se
 - [x] Docker Compose + GitHub Actions CI (ruff · black · mypy · pytest) + tests
 - [x] _(increment 3a)_ **attribution_rate aggregation** over the golden set (`make eval-attribution`) — measured micro (pooled) headline + macro + abstention split, on the hybrid+rerank answering config; published in [`README.md § Attribution rate (measured)`](#attribution-rate-measured)
 - [x] _(increment 3b)_ **RAGAS-style generation metrics** (faithfulness + answer-relevancy; reimplemented over the Anthropic SDK) — `make eval-ragas` entry point, offline-fake-tested, **measured & published** (faithfulness micro=0.981, answer-relevancy macro=0.828, n=50; see [§ Generation quality](#generation-quality--ragas-style-measured))
-- [x] _(increment 4)_ **Self-corrective RAG** (LangGraph `StateGraph` over the existing pipeline; opt-in via `agentic_enabled=False`; two bounded feedback loops: grade+rewrite retrieval, verify+regenerate generation; provably terminates via recursion limit; offline-testable with deterministic fakes; evaluation deferred)
+- [x] _(increment 4)_ **Self-corrective RAG** (LangGraph `StateGraph` over the existing pipeline; opt-in via `agentic_enabled=False`; two bounded feedback loops: grade+rewrite retrieval, verify+regenerate generation; provably terminates via recursion limit; offline-testable with deterministic fakes)
+- [x] _(increment 5)_ **Corrective-vs-baseline eval** (`make eval-corrective`, ADR-0008) — paired A/B over one hermetic index, pre-registered primary metric (retry-loop activation), **measured & published** (activation 0/50 on this corpus, +1 LLM call/query for no gain; see [§ Corrective RAG vs. baseline](#corrective-rag-vs-baseline-measured))
 
 ## Development
 

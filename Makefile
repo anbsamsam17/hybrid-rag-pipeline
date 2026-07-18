@@ -26,7 +26,7 @@ ingest:
 	python -m rag.indexing.build
 
 serve:
-	uvicorn rag.api.main:app --reload --port 8000
+	uvicorn rag.api.app:app --reload --port 8000
 
 eval:
 	python -m rag.eval.harness

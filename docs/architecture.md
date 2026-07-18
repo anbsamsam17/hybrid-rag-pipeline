@@ -1,6 +1,6 @@
 # Architecture
 
-> Status: scaffolding. This document tracks the system design; it is kept in sync with
+> Status: complete. This document tracks the system design; it is kept in sync with
 > `src/rag/` and cross-links the Architecture Decision Records in `docs/decisions/`.
 
 ## Pipeline stages
@@ -20,7 +20,8 @@ Corpus ─▶ ingestion/    loaders (PDF/DOCX/MD/HTML) → chunking (fixed | rec
                           terminates); honest abstention accepted (0-citation never regenerated);
                           degrades to best-effort answer + measured VerificationReport, never raises
                           or loops. Offline-fake tested; opt-in (agentic_enabled=False by default).
-       ─▶ api/          FastAPI: /ingest /query /eval, SSE streaming, observability
+       ─▶ api/          FastAPI: /health · /query · /query/stream (SSE) · /ingest;
+                          request-id + per-request latency structured logging
        ─▶ eval/         Retrieval evaluation harness (increment 2, complete):
                           · metrics.py — recall@k, nDCG@k, reciprocal_rank, MRR (pure, backend-agnostic)
                           · bootstrap.py — paired percentile CI95 (seed-stable, bit-exact reproducible)

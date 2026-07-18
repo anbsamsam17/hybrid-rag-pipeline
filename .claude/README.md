@@ -53,7 +53,7 @@ Defined in [`agents/`](agents). Each is a Markdown file with YAML frontmatter
 | `eval-scientist` | opus | The evaluation harness — recall@k / nDCG@k / MRR, RAGAS, custom `attribution_rate`, and **paired bootstrap CI95** across all four retrieval configurations. Guards against metric leakage and overclaiming. |
 | `citation-verifier` | sonnet | Generation + verification — citation-enforced prompts, Pydantic `Answer`/`Citation` schemas, and the attribution checker that verifies each claim against its source span. |
 | `agentic-graph-engineer` | sonnet | The optional self-corrective RAG layer — a LangGraph `StateGraph` (analyze → retrieve → grade → rewrite & retry → generate → verify → regenerate) with typed state and bounded retry. |
-| `api-engineer` | sonnet | The FastAPI service — async `/ingest` `/query` `/eval`, SSE streaming, Pydantic settings, structured JSON logging, OWASP-aware validation, and observability (p95 latency, cost/request). |
+| `api-engineer` | sonnet | The FastAPI service — async `/ingest` `/query` (+ SSE `/query/stream`), Pydantic settings, structured JSON logging with request-id and per-request latency, and OWASP-aware validation. |
 | `adversarial-reviewer` | opus | **Read-only** red-team. Attacks the diff for silent retrieval bugs, eval metric leakage/overclaiming, citation gaming, RRF tie edge cases, unbounded LangGraph loops, and async/security holes. Emits severity-tagged findings; edits nothing. |
 | `docs-historian` | haiku | Keeps `docs/architecture.md`, ADRs, and the README headline-metric block truthful to the code and to the latest **reproducible** eval numbers. |
 

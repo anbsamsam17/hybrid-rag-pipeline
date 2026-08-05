@@ -1,13 +1,11 @@
 # Hybrid RAG Pipeline
 
-> Production-grade Retrieval-Augmented Generation with **hybrid retrieval** (dense + sparse), **Reciprocal Rank Fusion**, **verified citations**, and a **rigorous retrieval evaluation harness**.
+> Most RAG demos stop at `embeddings → top-k → LLM` and prove nothing. This one measures itself: **hybrid retrieval** (dense + sparse + RRF + rerank), **verified citations** (attribution **1.000**, 55/55 grounded), and an eval harness with paired bootstrap CI95 that refuses to call noise a win. I run it daily over my own technical corpus (traffic-engineering and FCD-redressement docs) in private mode — the public numbers reproduce from the committed sample corpus.
 
 [![CI](https://github.com/anbsamsam17/hybrid-rag-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/anbsamsam17/hybrid-rag-pipeline/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Status](https://img.shields.io/badge/status-complete-brightgreen)](#roadmap)
-
-> ✅ **Status: complete.** Every [roadmap](#roadmap) item is implemented, tested (370 offline tests, CI green), and measured. Every number in this README is reproducible from the eval harness (`make eval` and its LLM-backed siblings) — nothing is declared without a measurement behind it.
 
 ## Results at a glance
 
@@ -33,6 +31,12 @@ Most RAG demos stop at `embeddings → top-k → LLM` over a single PDF. That pr
 - **Does it hold up as a system?** Async API (SSE streaming), containerized vector store, structured request-id + per-request latency logging, CI, and architecture decision records capturing the key tradeoffs.
 
 The differentiator is not the stack — it is the **evaluation rigor** and the **verified citations**.
+
+The committed demo corpus is deliberately drawn from my own working domain — motorway
+rules and traffic documents ([`data/sample/`](data/sample/)) — and the same pipeline runs
+locally over private work documents (`data/corpus/`, never committed; see
+[`data/README.md`](data/README.md)). I use it to answer domain questions with citations
+I can verify, instead of trusting an LLM's memory.
 
 ## Quickstart
 
@@ -106,6 +110,7 @@ Verification is lexical (normalized substring / hardened token-overlap vs. the c
 - Reranker: BAAI/bge-reranker-base (top_k=5)
 - LLM: Claude Sonnet 4.6 (verification)
 - Reproducible via: `make eval-attribution` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
+- Committed report: [`docs/reports/attribution_results.json`](docs/reports/attribution_results.json)
 
 ### Generation quality — RAGAS-style (measured)
 
@@ -138,6 +143,7 @@ Three distinct metrics, three distinct denominators, **never summed and never on
 - Answer-relevancy embedder: BAAI/bge-small-en-v1.5 · Reranker: BAAI/bge-reranker-base (top_k=5) · N_questions=3
 - n=50, single_run=true, no CI (LLM non-reproducible)
 - Reproducible via: `make eval-ragas` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
+- Committed report: [`docs/reports/generation_quality_results.json`](docs/reports/generation_quality_results.json)
 
 ### Corrective RAG vs. baseline (measured)
 
@@ -160,7 +166,7 @@ Three distinct metrics, three distinct denominators, **never summed and never on
 On this easy corpus (12-doc, single-fact queries, top-5 already grounded), the corrective retry loop never fires (0/50). The grading step still runs and filters contexts on all queries, but this produces zero measurable gain: attribution and LLM-judged correctness remain perfect, recall identical, and any F1 delta is generator+judge noise (single run, no CI). **Net effect: +1 LLM call/query for no benefit.** The retry loop is designed for harder, retrieval-failing regimes; this corpus simply does not exercise it. Any correctness or attribution delta is non-reproducible LLM stochasticity and is never claimed as a win.
 
 **Provenance (distinct from retrieval and attribution blocks above):**
-- git commit: 2d40142 (DISTINCT from retrieval commit 9284155 and attribution commit de64733)
+- git commit: 2d40142 (DISTINCT from retrieval commit 74eeccd and attribution commit de64733)
 - corpus SHA-256: beb2701a
 - Baseline LLM: Claude Sonnet 4.6 (generation)
 - Corrective LLM: AnthropicCorrectiveLLM (grade + rewrite + regenerate)
@@ -169,6 +175,7 @@ On this easy corpus (12-doc, single-fact queries, top-5 already grounded), the c
 - Reranker: BAAI/bge-reranker-base (top_k=5)
 - n=50, single_run=true, no CI (generation non-reproducible)
 - Reproducible via: `make eval-corrective` (requires `ANTHROPIC_API_KEY`; not part of `make eval`)
+- Committed report: [`docs/reports/corrective_results.json`](docs/reports/corrective_results.json)
 
 ### Reproducibility
 
@@ -177,11 +184,12 @@ On this easy corpus (12-doc, single-fact queries, top-5 already grounded), the c
 - Reranker: BAAI/bge-reranker-base (cross-encoder)
 - Corpus: data/sample (12 documents, 39 chunks)
 - Golden set: 50 labeled queries (lexical + semantic)
-- git commit: 9284155 (re-measured after a history rewrite changed commit SHAs; all
-  metrics reproduced bit-identical to the original 50-query run — trees unchanged)
+- git commit: 74eeccd (re-measured at this SHA; all metrics reproduced bit-identical
+  to the original 50-query run)
 - corpus SHA-256: beb2701a
 - Bootstrap: seed=12345, B=10000, paired percentile CI95
 - numpy: 2.1.3
+- Committed report: [`docs/reports/eval_results.json`](docs/reports/eval_results.json) (+ index provenance: [`docs/reports/meta.json`](docs/reports/meta.json))
 
 To reproduce these numbers:
 ```bash
@@ -263,9 +271,24 @@ An optional **self-corrective RAG** layer ([ADR-0007](docs/decisions/ADR-0007-se
 
 This repository is developed with a multi-agent orchestration setup (see [`.claude/`](.claude) and [`CLAUDE.md`](CLAUDE.md)) — specialized agents handle architecture, implementation, adversarial review, and documentation.
 
-## Related work
+## Part of a three-repo AI engineering stack
 
-- [`machine-learning-traffic-redressement-platform`](https://github.com/anbsamsam17/machine-learning-traffic-redressement-platform) — production ML platform with rigorous statistical evaluation (bootstrap CI95, paired McNemar, drift analysis). This project applies the same evaluation rigor to LLM retrieval.
+Three repos I build and use together, each carrying the same discipline — *measured,
+never declared; every published number reproducible from a harness*:
+
+- **`hybrid-rag-pipeline`** *(this repo)* — hybrid dense+sparse retrieval and the
+  **evaluation science**: nDCG/recall@k, verified citations, paired bootstrap CI95.
+- [`multi-agent-orchestrator`](https://github.com/anbsamsam17/multi-agent-orchestrator) —
+  agents as production infrastructure: provable termination, structural safety,
+  measured escalation, deterministic replay.
+- [`eval-dataset-generator`](https://github.com/anbsamsam17/Eval-dataset-generator) —
+  mines production traces into a statistically validated golden set
+  (human-vs-judge Cohen's κ = 0.804, CI95 [0.65, 0.93], measured double-blind).
+
+The same statistical discipline runs in my day-job tooling:
+[`machine-learning-traffic-redressement-platform`](https://github.com/anbsamsam17/machine-learning-traffic-redressement-platform)
+(bootstrap CI95, paired McNemar, drift analysis on traffic ML) — this project applies
+that evaluation rigor to LLM retrieval.
 
 ## License
 

@@ -53,7 +53,7 @@ figure.
   drift is a bug; your job is to remove it, not add to it.
 - **Run, then quote.** When refreshing metrics, you may run `make eval` / `make test` via Bash to get
   current numbers (or use the numbers eval-scientist provides from a reproducible run). Quote exactly.
-- **Keep it crisp.** Clear, accurate, no marketing fluff. A recruiter reading the README should immediately
+- **Keep it crisp.** Clear, accurate, no marketing fluff. Anyone reading the README should immediately
   see a rigorous, reproducible comparison — not adjectives.
 - **Stay in your lane.** If updating the docs reveals that the architecture is unclear, two modules
   disagree, or a metric looks wrong, do not paper over it — flag it for rag-architect (design) or

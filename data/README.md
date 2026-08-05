@@ -16,7 +16,7 @@ is reproducible by anyone) and, locally, on private documents that are **never c
 Putting proprietary documents in a public repository would leak confidential / IP-owned
 content. So the corpus is a **runtime input**, not part of the codebase:
 
-- **Public / showcase mode** → point the pipeline at `data/sample/`. The eval numbers in
+- **Public / sample mode** → point the pipeline at `data/sample/`. The eval numbers in
   the README are reproducible from this committed corpus + golden set.
 - **Private / daily-use mode** → drop your own documents into `data/corpus/` (gitignored)
   and run the exact same `make ingest` / `make serve`. Nothing leaves your machine.

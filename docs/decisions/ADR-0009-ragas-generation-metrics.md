@@ -238,7 +238,7 @@ ADR-0006/0008 precedent of a purpose-built report. Distinct artifact
 Positive:
 - **The binding SDK rules stay intact.** Every LLM call is the official `anthropic` SDK with adaptive
   thinking + high effort, fail-closed, `messages.parse` — no LangChain wrapper, no `temperature`, no
-  banned params, no prefill. The reimplementation is the *stronger* senior signal: it demonstrates we
+  banned params, no prefill. The reimplementation is the *stronger* engineering statement: it demonstrates we
   understand the RAGAS algorithm well enough to own it, rather than importing a black box that would
   break our own rules.
 - **Fully offline-testable and byte-stable under fakes**, so structure / invariants / abstention +

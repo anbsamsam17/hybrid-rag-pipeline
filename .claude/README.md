@@ -14,7 +14,7 @@ exactly how this codebase is built and reviewed.
 
 ## Philosophy
 
-The repo's whole senior signal lives in two places: **rigorous, defensible retrieval
+The repo's whole credibility lives in two places: **rigorous, defensible retrieval
 evaluation** (recall@k / nDCG@k / MRR with bootstrap CI95, comparing dense vs sparse
 vs hybrid vs hybrid+rerank) and **measured — not declared — citation attribution**.
 Those are exactly the places where a subtle bug is invisible: a `recall@k` that counts
@@ -99,7 +99,7 @@ optional tooling isn't installed — so they never block a fresh checkout.
   reviewer is read-only so review and fix never collapse into the same step.
 - **The headline numbers can't be faked.** The eval command refuses non-reproducible
   numbers, and the protect hook locks the golden labels and provenance. The comparison
-  table a recruiter sees is, by construction, reproducible from `make eval`.
+  table a reader sees is, by construction, reproducible from `make eval`.
 - **Decisions are durable.** Load-bearing trade-offs become ADRs, and documentation is
   kept in lock-step with the code and the latest reproducible metrics.
 

@@ -1,0 +1,384 @@
+{
+  "config": "hybrid+rerank",
+  "macro_attribution_rate": 1.0,
+  "macro_attribution_rate_answered": 1.0,
+  "micro_attribution_rate": 1.0,
+  "n_abstained": 0,
+  "n_answered": 50,
+  "n_queries": 50,
+  "per_query": [
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q01"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q02"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q03"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q04"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 3,
+      "n_grounded": 3,
+      "query_id": "q05"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q06"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q07"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q08"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q09"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q10"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q11"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q12"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q13"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q14"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q15"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 2,
+      "n_grounded": 2,
+      "query_id": "q16"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q17"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q18"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q19"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q20"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q21"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q22"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q23"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 2,
+      "n_grounded": 2,
+      "query_id": "q24"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q25"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q26"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q27"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q28"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q29"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q30"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q31"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q32"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q33"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q34"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q35"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q36"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q37"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q38"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q39"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q40"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q41"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q42"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q43"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q44"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q45"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q46"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q47"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q48"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 1,
+      "n_grounded": 1,
+      "query_id": "q49"
+    },
+    {
+      "abstained": false,
+      "attribution_rate": 1.0,
+      "n_citations": 2,
+      "n_grounded": 2,
+      "query_id": "q50"
+    }
+  ],
+  "provenance": {
+    "corpus_dir": "C:\\Users\\SamirANBRI\\Desktop\\Persos\\Projets_CV\\hybrid-rag-pipeline\\data\\sample",
+    "corpus_sha256": "beb2701a7daea638e736ca1843ecc69fa6dd35e0788b1f1c286febee82703a2b",
+    "embedder_class": "SentenceTransformerEmbedder",
+    "git_sha": "de64733fc458907e4cebcc7ab0f802d59ea125f1",
+    "library_versions": {
+      "numpy": "2.1.3",
+      "pydantic": "2.13.3",
+      "python": "3.11.9",
+      "qdrant-client": "1.18.0",
+      "rank-bm25": "0.2.2",
+      "sentence-transformers": "5.6.0"
+    },
+    "llm_class": "AnthropicLLMClient",
+    "llm_model": "claude-sonnet-4-6",
+    "n_queries": 50,
+    "publishable": true,
+    "reranker_class": "CrossEncoderReranker",
+    "single_run": true,
+    "top_k_rerank": 5
+  },
+  "total_citations": 55,
+  "total_grounded": 55
+}

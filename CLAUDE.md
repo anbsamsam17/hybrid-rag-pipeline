@@ -2,7 +2,7 @@
 
 Project memory for **hybrid-rag-pipeline**. This file is loaded into context at the
 start of every Claude Code session. Read it before touching code — it encodes the
-non-negotiables that keep this repo's senior signal intact.
+non-negotiables that keep this repo's engineering discipline intact.
 
 ---
 
@@ -76,7 +76,7 @@ Corpus ─▶ src/rag/ingestion/    loaders, chunkers (fixed / recursive / seman
                                  attribution_rate · bootstrap CI95
 
 src/rag/config.py               Pydantic settings (single source of config truth)
-datasets/golden.jsonl           labeled golden set — PROTECTED, never agent-mutated
+data/eval/golden.jsonl          labeled golden set — PROTECTED, never agent-mutated
 docs/architecture.md            kept in sync with src/rag
 docs/decisions/ADR-NNN-*.md     architecture decision records
 ```
@@ -97,7 +97,7 @@ commands so behavior is reproducible.
 | `make up` / `make down` | Start / stop Qdrant via `docker-compose.yml` |
 | `make ingest` | Run ingestion + build dense+sparse index, writing `meta.json` |
 | `make serve` | Launch the FastAPI service (async, SSE) |
-| `make eval` | Run the full eval harness over `datasets/golden.jsonl` → comparison table + CI95 |
+| `make eval` | Run the full eval harness over `data/eval/golden.jsonl` → comparison table + CI95 |
 | `make test` | `pytest` (unit + integration) |
 | `make lint` | `ruff check` + `black --check` |
 | `make fmt` | `ruff check --fix` + `black` |
@@ -141,7 +141,7 @@ places where a subtle bug silently destroys credibility.
 |-------|-------|--------------------|
 | `rag-architect` | opus | System design, ADRs, cross-cutting trade-offs (chunking, RRF vs weighted, Qdrant schema, where LangGraph plugs in). **Use proactively** before any new subsystem or non-trivial change, and to reconcile module contracts. |
 | `retrieval-engineer` | sonnet | `ingestion/`, `indexing/`, `retrieval/` — loaders, chunkers, embeddings, vector store, BM25, dense/sparse search, **hand-written RRF (k=60)**, rerank, reproducible `meta.json` builds. Keep fusion math correct and tie-stable. |
-| `eval-scientist` | opus | `eval/` + `datasets/golden.jsonl` — recall@k / nDCG@k / MRR, RAGAS, `attribution_rate`, **paired bootstrap CI95**. The repo's headline signal: rigorous, no metric leakage, no overclaiming. |
+| `eval-scientist` | opus | `eval/` + `data/eval/golden.jsonl` — recall@k / nDCG@k / MRR, RAGAS, `attribution_rate`, **paired bootstrap CI95**. The repo's headline signal: rigorous, no metric leakage, no overclaiming. |
 | `citation-verifier` | sonnet | `generation/` + `verification/` — citation-enforced prompts, Pydantic `Answer`/`Citation` schemas, the anti-hallucination attribution checker. LLM-judge uses `claude-opus-4-8`/`claude-sonnet-4-6` via the SDK with adaptive thinking (never deprecated params). |
 | `agentic-graph-engineer` | sonnet | `agentic/corrective_rag.py` — LangGraph `StateGraph`: typed state, conditional edges, loop/retry-budget guards, grading + query-rewrite nodes. Composes on top of retrieval/verification. |
 | `api-engineer` | sonnet | `api/` + `config.py` — async `/ingest` `/query` `/eval`, SSE streaming, Pydantic settings, structured JSON logging with request-id, OWASP-aware validation + CORS, observability (p95 latency, cost/request). |
@@ -167,7 +167,7 @@ deps are missing):
 - **PostToolUse / Edit|Write → `format_python.py`** — auto `ruff --fix` + `black` on
   the changed `.py` file so reviews focus on logic, not formatting.
 - **PreToolUse / Edit|Write → `protect_golden_and_secrets.py`** — **blocks (exit 2)**
-  writes to `datasets/golden.jsonl`, `.env`, or `meta.json` provenance. The golden
+  writes to `data/eval/golden.jsonl`, `.env`, or `meta.json` provenance. The golden
   labels and reproducibility provenance must never be silently mutated by an agent —
   doing so invalidates every eval number.
 - **Stop → `eval_guard.py`** — if anything under `src/rag/{retrieval,eval,verification}/`
@@ -181,5 +181,5 @@ deps are missing):
 - After any retrieval/eval/verification change, re-measure via `/eval-report` —
   never report a stale number.
 - **No AI attribution anywhere public**: never add `Co-Authored-By: Claude …` trailers
-  or "Generated with …" footers to commit messages, PR titles/bodies, or docs. This is
-  a portfolio repo — its git history and PRs are read by recruiters.
+  or "Generated with …" footers to commit messages, PR titles/bodies, or docs. The
+  git history and PRs are part of this tool's public engineering record.

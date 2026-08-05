@@ -1,0 +1,543 @@
+{
+  "committal_answer_relevancy": 0.8279127397363546,
+  "config": "hybrid+rerank",
+  "macro_answer_relevancy": 0.8279127397363546,
+  "macro_faithfulness": 0.9862857142857143,
+  "macro_faithfulness_answered": 0.9862857142857143,
+  "micro_faithfulness": 0.9813084112149533,
+  "n_committal": 50,
+  "n_faith_abstained": 0,
+  "n_faith_answered": 50,
+  "n_noncommittal": 0,
+  "n_queries": 50,
+  "per_query": [
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 1,
+      "n_supported": 1,
+      "noncommittal": false,
+      "query_id": "q01",
+      "relevancy": 0.8296322952926615
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q02",
+      "relevancy": 0.8953182270768149
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q03",
+      "relevancy": 0.8154872931548557
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 6,
+      "n_supported": 6,
+      "noncommittal": false,
+      "query_id": "q04",
+      "relevancy": 0.6609143088130205
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 15,
+      "n_supported": 15,
+      "noncommittal": false,
+      "query_id": "q05",
+      "relevancy": 0.8699878342260016
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q06",
+      "relevancy": 0.8883455273323714
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q07",
+      "relevancy": 0.9282922423842445
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 0.7142857142857143,
+      "n_generated_questions": 3,
+      "n_statements": 7,
+      "n_supported": 5,
+      "noncommittal": false,
+      "query_id": "q08",
+      "relevancy": 0.7918899694374382
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q09",
+      "relevancy": 0.8705772580388592
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 6,
+      "n_supported": 6,
+      "noncommittal": false,
+      "query_id": "q10",
+      "relevancy": 0.8111924782421186
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 5,
+      "n_supported": 5,
+      "noncommittal": false,
+      "query_id": "q11",
+      "relevancy": 0.7790819782461574
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q12",
+      "relevancy": 0.8240554620408944
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q13",
+      "relevancy": 0.7487525932342086
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 6,
+      "n_supported": 6,
+      "noncommittal": false,
+      "query_id": "q14",
+      "relevancy": 0.7549803130299533
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 5,
+      "n_supported": 5,
+      "noncommittal": false,
+      "query_id": "q15",
+      "relevancy": 0.7169842377171997
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 7,
+      "n_supported": 7,
+      "noncommittal": false,
+      "query_id": "q16",
+      "relevancy": 0.8452240304974655
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 2,
+      "n_supported": 2,
+      "noncommittal": false,
+      "query_id": "q17",
+      "relevancy": 0.7985627566396375
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 5,
+      "n_supported": 5,
+      "noncommittal": false,
+      "query_id": "q18",
+      "relevancy": 0.838194946506644
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 5,
+      "n_supported": 5,
+      "noncommittal": false,
+      "query_id": "q19",
+      "relevancy": 0.8071385007686168
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 5,
+      "n_supported": 5,
+      "noncommittal": false,
+      "query_id": "q20",
+      "relevancy": 0.8183112357950225
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 6,
+      "n_supported": 6,
+      "noncommittal": false,
+      "query_id": "q21",
+      "relevancy": 0.8073589731208664
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q22",
+      "relevancy": 0.8602535522094898
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q23",
+      "relevancy": 0.9567393980257566
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 6,
+      "n_supported": 6,
+      "noncommittal": false,
+      "query_id": "q24",
+      "relevancy": 0.8460544417473228
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q25",
+      "relevancy": 0.8409494459474599
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q26",
+      "relevancy": 0.8710045981562123
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 2,
+      "n_supported": 2,
+      "noncommittal": false,
+      "query_id": "q27",
+      "relevancy": 0.8734847755736513
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 1,
+      "n_supported": 1,
+      "noncommittal": false,
+      "query_id": "q28",
+      "relevancy": 0.8728103201306007
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 1,
+      "n_supported": 1,
+      "noncommittal": false,
+      "query_id": "q29",
+      "relevancy": 0.9581680766026333
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 2,
+      "n_supported": 2,
+      "noncommittal": false,
+      "query_id": "q30",
+      "relevancy": 0.9203920316669544
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q31",
+      "relevancy": 0.7567503861298194
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q32",
+      "relevancy": 0.8493525845584681
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q33",
+      "relevancy": 0.883026210817324
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 7,
+      "n_supported": 7,
+      "noncommittal": false,
+      "query_id": "q34",
+      "relevancy": 0.799612189856942
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 7,
+      "n_supported": 7,
+      "noncommittal": false,
+      "query_id": "q35",
+      "relevancy": 0.7136392710439913
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q36",
+      "relevancy": 0.9179653828869317
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q37",
+      "relevancy": 0.8667631385989284
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 2,
+      "n_supported": 2,
+      "noncommittal": false,
+      "query_id": "q38",
+      "relevancy": 0.9205288140174975
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q39",
+      "relevancy": 0.7968307488709185
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q40",
+      "relevancy": 0.7569253329058746
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 7,
+      "n_supported": 7,
+      "noncommittal": false,
+      "query_id": "q41",
+      "relevancy": 0.8638322884439731
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q42",
+      "relevancy": 0.745993189723832
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 5,
+      "n_supported": 5,
+      "noncommittal": false,
+      "query_id": "q43",
+      "relevancy": 0.8083071335961654
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q44",
+      "relevancy": 0.7642841853807981
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 6,
+      "n_supported": 6,
+      "noncommittal": false,
+      "query_id": "q45",
+      "relevancy": 0.8699512646038775
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 4,
+      "n_supported": 4,
+      "noncommittal": false,
+      "query_id": "q46",
+      "relevancy": 0.9205670360662456
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 3,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q47",
+      "relevancy": 0.752643029057421
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 0.6,
+      "n_generated_questions": 3,
+      "n_statements": 5,
+      "n_supported": 3,
+      "noncommittal": false,
+      "query_id": "q48",
+      "relevancy": 0.7328737813314786
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 1,
+      "n_supported": 1,
+      "noncommittal": false,
+      "query_id": "q49",
+      "relevancy": 0.7227250895798422
+    },
+    {
+      "faith_abstained": false,
+      "faithfulness": 1.0,
+      "n_generated_questions": 3,
+      "n_statements": 5,
+      "n_supported": 5,
+      "noncommittal": false,
+      "query_id": "q50",
+      "relevancy": 0.8529268276922634
+    }
+  ],
+  "provenance": {
+    "answer_relevancy_scorer_class": "AnthropicAnswerRelevancyScorer",
+    "corpus_dir": "C:\\Users\\SamirANBRI\\Desktop\\Persos\\Projets_CV\\hybrid-rag-pipeline\\data\\sample",
+    "corpus_sha256": "beb2701a7daea638e736ca1843ecc69fa6dd35e0788b1f1c286febee82703a2b",
+    "embedder_class": "SentenceTransformerEmbedder",
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "faithfulness_scorer_class": "AnthropicFaithfulnessScorer",
+    "git_sha": "3e9b399cbd19501cadc45e560d498ae4500dd23a",
+    "library_versions": {
+      "numpy": "2.1.3",
+      "pydantic": "2.13.3",
+      "python": "3.11.9",
+      "qdrant-client": "1.18.0",
+      "rank-bm25": "0.2.2",
+      "sentence-transformers": "5.6.0"
+    },
+    "llm_class": "AnthropicLLMClient",
+    "llm_model": "claude-sonnet-4-6",
+    "n_answer_relevancy_questions": 3,
+    "n_queries": 50,
+    "publishable": true,
+    "reranker_class": "CrossEncoderReranker",
+    "scorer_model": "claude-opus-4-8",
+    "single_run": true,
+    "top_k_rerank": 5
+  },
+  "total_statements": 214,
+  "total_supported": 210
+}

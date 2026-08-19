@@ -67,7 +67,7 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/anbsamsam17/hybrid-rag-pipeline"
+Repository = "https://github.com/AnbriSamir/hybrid-rag-pipeline"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/rag"]

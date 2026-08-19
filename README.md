@@ -2,7 +2,7 @@
 
 > Most RAG demos stop at `embeddings → top-k → LLM` and prove nothing. This one measures itself: **hybrid retrieval** (dense + sparse + RRF + rerank), **verified citations** (attribution **1.000**, 55/55 grounded), and an eval harness with paired bootstrap CI95 that refuses to call noise a win. I run it daily over my own technical corpus (traffic-engineering and FCD-redressement docs) in private mode — the public numbers reproduce from the committed sample corpus.
 
-[![CI](https://github.com/anbsamsam17/hybrid-rag-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/anbsamsam17/hybrid-rag-pipeline/actions/workflows/ci.yml)
+[![CI](https://github.com/AnbriSamir/hybrid-rag-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/AnbriSamir/hybrid-rag-pipeline/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Status](https://img.shields.io/badge/status-complete-brightgreen)](#roadmap)
@@ -41,7 +41,7 @@ I can verify, instead of trusting an LLM's memory.
 ## Quickstart
 
 ```bash
-git clone https://github.com/anbsamsam17/hybrid-rag-pipeline && cd hybrid-rag-pipeline
+git clone https://github.com/AnbriSamir/hybrid-rag-pipeline && cd hybrid-rag-pipeline
 make install                        # pip install -e ".[dev]" + pre-commit hooks
 make test                           # 370 tests — fully offline: no API key, no GPU, no network
 
@@ -278,15 +278,15 @@ never declared; every published number reproducible from a harness*:
 
 - **`hybrid-rag-pipeline`** *(this repo)* — hybrid dense+sparse retrieval and the
   **evaluation science**: nDCG/recall@k, verified citations, paired bootstrap CI95.
-- [`multi-agent-orchestrator`](https://github.com/anbsamsam17/multi-agent-orchestrator) —
+- [`multi-agent-orchestrator`](https://github.com/AnbriSamir/multi-agent-orchestrator) —
   agents as production infrastructure: provable termination, structural safety,
   measured escalation, deterministic replay.
-- [`eval-dataset-generator`](https://github.com/anbsamsam17/Eval-dataset-generator) —
+- [`eval-dataset-generator`](https://github.com/AnbriSamir/Eval-dataset-generator) —
   mines production traces into a statistically validated golden set
   (human-vs-judge Cohen's κ = 0.804, CI95 [0.65, 0.93], measured double-blind).
 
 The same statistical discipline runs in my day-job tooling:
-[`machine-learning-traffic-redressement-platform`](https://github.com/anbsamsam17/machine-learning-traffic-redressement-platform)
+[`machine-learning-traffic-redressement-platform`](https://github.com/AnbriSamir/machine-learning-traffic-redressement-platform)
 (bootstrap CI95, paired McNemar, drift analysis on traffic ML) — this project applies
 that evaluation rigor to LLM retrieval.
 
